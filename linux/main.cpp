@@ -16,6 +16,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 
 #include "dcmtk/dcmdata/dctk.h"
 #include "dcmtk/dcmimgle/dcmimage.h"
@@ -23,41 +24,42 @@
 
 using namespace std;
 
-const int width = 192;
-const int height = 192;
-const int depth = 192;
+#define WIDTH 192
+#define HEIGHT 192
+#define DEPTH 192
+
 float *points;
 
-float *ute1 = new float[ width*height*depth ];
-float *ute2 = new float[ width*height*depth ];
+float *ute1 = new float[ WIDTH*HEIGHT*DEPTH ];
+float *ute2 = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *sinusmask = new float[ width*height*depth ];
-float *brain = new float[ width*height*depth ];
-float *csf = new float[ width*height*depth ];
-float *base = new float[ width*height*depth ];
-float *r2noise = new float[ width*height*depth ];
-float *sphenoidmask = new float[ width*height*depth ];
+float *sinusmask = new float[ WIDTH*HEIGHT*DEPTH ];
+float *brain = new float[ WIDTH*HEIGHT*DEPTH ];
+float *csf = new float[ WIDTH*HEIGHT*DEPTH ];
+float *base = new float[ WIDTH*HEIGHT*DEPTH ];
+float *r2noise = new float[ WIDTH*HEIGHT*DEPTH ];
+float *sphenoidmask = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *ute1_s = new float[ width*height*depth ];
-float *ute2_s = new float[ width*height*depth ];
-float *ute12_s = new float[ width*height*depth ];
-float *ute12_air = new float[ width*height*depth ];
+float *ute1_s = new float[ WIDTH*HEIGHT*DEPTH ];
+float *ute2_s = new float[ WIDTH*HEIGHT*DEPTH ];
+float *ute12_s = new float[ WIDTH*HEIGHT*DEPTH ];
+float *ute12_air = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *volume = new float[ width*height*depth ];
+float *volume = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *R2map = new float[ width*height*depth ];
-float *R2map_low_LAC = new float[ width*height*depth ];
-float *R2map_LAC = new float[ width*height*depth ];
+float *R2map = new float[ WIDTH*HEIGHT*DEPTH ];
+float *R2map_low_LAC = new float[ WIDTH*HEIGHT*DEPTH ];
+float *R2map_LAC = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *R2bone_in_uteair = new float[ width*height*depth ];
+float *R2bone_in_uteair = new float[ WIDTH*HEIGHT*DEPTH ];
 
-float *umap_new = new float[ width*height*depth ];
+float *umap_new = new float[ WIDTH*HEIGHT*DEPTH ];
 
 int class_label = 0;
 int *labels = new int[20000];
-float *arr = new float[ width*height*depth ];
-float *cluster_all = new float[ width*height*depth ];
-float *cluster = new float[ width*height*depth ];
+float *arr = new float[ WIDTH*HEIGHT*DEPTH ];
+float *cluster_all = new float[ WIDTH*HEIGHT*DEPTH ];
+float *cluster = new float[ WIDTH*HEIGHT*DEPTH ];
 
 string atlasNII="";
 string atlasMNC="";
@@ -67,7 +69,6 @@ string basesinus="";
 string baseNII="";
 string sphenoid="";
 
-/*
 string exec_with_output(const char* cmd) {
     char buffer[128];
     std::string result = "";
@@ -78,15 +79,15 @@ string exec_with_output(const char* cmd) {
             result += buffer;
     }
     //cout << "exec output: " << result << endl;
+    result.erase(std::remove(result.begin(), result.end(), '\n'), result.end());
     return result;
 }
 
-/* Prepare binary command directories 
+// Prepare binary command directories 
 string str_dcm2mnc = exec_with_output("which dcm2mnc");
 string str_nii2mnc = exec_with_output("which nii2mnc");
 const char *dcm2mnc = str_dcm2mnc.c_str();
 const char *nii2mnc = str_nii2mnc.c_str();
-*/
 
 int _max( float const* a, size_t n )
 {
@@ -310,7 +311,6 @@ int* find_scale_constants(){
 		mean2 = find_mean(points,max1,max2,2);
 	}
 	int* largest = find_max(mean1,mean2,max1,max2);
-	//points[largest[0] + largest[1]*max1] = 3;
 	delete[] points;
 	delete[] jhist;
 
@@ -330,7 +330,6 @@ void warp_image(const char* moving, const char* stationary, const char* new_name
 	if(file_exists("/tmp/resolute_tmp/cc10x5x2Affine.txt")){
 		int status;
 		status = system(executable.c_str());
-		//cout << " - Finished Warping " << new_name << endl;
 	} else {
 		cout << "Missing transformation file" << endl; 
 	}
@@ -357,29 +356,9 @@ void system_call(vector<string> arg_input, const char *logfile){
     	for (int j = 0;  j < arg_input.size();  j++){
             argv [j] = arg_input[j] .c_str();
     	}
-    	argv [arg_input.size()+1] = NULL;
+    	argv [arg_input.size()] = NULL;
 
 		execv(arg_input[0].c_str(),(char **)argv);
-	}
-}
-
-void system_call_simple(vector<string> arg_input, const char *logfile){
-	pid_t parent = getpid();
-	pid_t pid = fork();
-	if(pid > 0){
-		int status;
-		waitpid(pid, &status, 0);
-	} else {		
-		
-		int fd; 
-		if((fd = open(logfile, O_RDWR | O_CREAT))==-1){
-  			perror("open");
-		}
-		dup2(fd,STDOUT_FILENO); 
-		dup2(fd,STDERR_FILENO); 
-		close(fd);
-
-		execlp(arg_input[0].c_str(),arg_input[0].c_str(),arg_input[1].c_str(),arg_input[2].c_str(),(char *)0);
 	}
 }
 
@@ -423,37 +402,37 @@ float blur_voxel(int i, float *arr){
 
 void load_raw_files(){
 	ifstream in( "/tmp/resolute_tmp/ute1.raw", ios::in | ios::binary );
-	in.read( reinterpret_cast< char* >( ute1 ), sizeof(float)*width*height*depth );
+	in.read( reinterpret_cast< char* >( ute1 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in.close();
 	ifstream in2( "/tmp/resolute_tmp/ute2.raw", ios::in | ios::binary );
-	in2.read( reinterpret_cast< char* >( ute2 ), sizeof(float)*width*height*depth );
+	in2.read( reinterpret_cast< char* >( ute2 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in2.close();
 
 	// Warp the sinus and nose area
 	warp_image(sinusAndNose.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/sinus.nii");
-	vector<string> vector_sinusAndNose {"/usr/local/bin/nii2mnc","/tmp/resolute_tmp/sinus.nii","/tmp/resolute_tmp/sinus2.mnc"};
-	system_call_simple(vector_sinusAndNose,"/tmp/resolute_tmp/log_trash.txt");
+	vector<string> vector_sinusAndNose {nii2mnc,"/tmp/resolute_tmp/sinus.nii","/tmp/resolute_tmp/sinus2.mnc"};
+	system_call(vector_sinusAndNose,"/tmp/resolute_tmp/log_trash.txt");
 	system("mincresample /tmp/resolute_tmp/sinus2.mnc -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/sinusmask.mnc -clobber -quiet");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/sinusmask.mnc > /tmp/resolute_tmp/sinusmask.raw");
 	ifstream in_sinus( "/tmp/resolute_tmp/sinusmask.raw", ios::in | ios::binary );
-	in_sinus.read( reinterpret_cast< char* >( sinusmask ), sizeof(float)*width*height*depth );
+	in_sinus.read( reinterpret_cast< char* >( sinusmask ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_sinus.close();
 
 	// Extract brain and CSF values
 	cout << "Extracting brain and CSF values (about 30 seconds)" << endl;
 	warp_image(atlasmaskNII.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/atlasbrain.nii");
-	vector<string> vector_atlasbrain {"/usr/local/bin/nii2mnc","/tmp/resolute_tmp/atlasbrain.nii","/tmp/resolute_tmp/atlasbrain.mnc"};
-	system_call_simple(vector_atlasbrain,"/tmp/resolute_tmp/log_trash.txt");
+	vector<string> vector_atlasbrain {nii2mnc,"/tmp/resolute_tmp/atlasbrain.nii","/tmp/resolute_tmp/atlasbrain.mnc"};
+	system_call(vector_atlasbrain,"/tmp/resolute_tmp/log_trash.txt");
 	system("mincresample /tmp/resolute_tmp/atlasbrain.mnc -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/brainmask.mnc -quiet -clobber");
 	system("mincmath -quiet -gt -const 0 /tmp/resolute_tmp/brainmask.mnc /tmp/resolute_tmp/brain.mnc -clobber");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/brain.mnc > /tmp/resolute_tmp/brain.raw");
 	ifstream in_brain( "/tmp/resolute_tmp/brain.raw", ios::in | ios::binary );
-	in_brain.read( reinterpret_cast< char* >( brain ), sizeof(float)*width*height*depth );
+	in_brain.read( reinterpret_cast< char* >( brain ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_brain.close();
 	// CSF 
 	if(!file_exists("/tmp/resolute_tmp/ute2_nuc.mnc")){
 		vector<string> vector_insect {"/usr/local/share/RESOLUTE/insect_modified","/tmp/resolute_tmp/ute2.mnc",atlasMNC};
-		system_call_simple(vector_insect,"/tmp/resolute_tmp/log_insect.txt");
+		system_call(vector_insect,"/tmp/resolute_tmp/log_insect.txt");
 		system("mv ute2_* /tmp/resolute_tmp/");
 	}
 	system("mincresample /tmp/resolute_tmp/ute2_nuc_tal_cla.mnc -like /tmp/resolute_tmp/ute2.mnc -transformation /tmp/resolute_tmp/ute2_nuc_total.xfm -invert_transformation /tmp/resolute_tmp/ute2_cla.mnc -quiet -clobber");
@@ -461,40 +440,40 @@ void load_raw_files(){
 	system("mincmath -quiet -eq -const 1 /tmp/resolute_tmp/ute2_nuc_tal_cla_rsl.mnc /tmp/resolute_tmp/csf.mnc -clobber");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/csf.mnc > /tmp/resolute_tmp/csf.raw");
 	ifstream in_csf( "/tmp/resolute_tmp/csf.raw", ios::in | ios::binary );
-	in_csf.read( reinterpret_cast< char* >( csf ), sizeof(float)*width*height*depth );
+	in_csf.read( reinterpret_cast< char* >( csf ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_csf.close();
 	cout << " - Done" << endl;
 
 	// Extract base of skull mask
 	cout << "Running extract masks" << endl;
 	warp_image(baseNII.c_str(),"/tmp/resolute_tmp/ute2.nii","/tmp/resolute_tmp/base.nii");
-	vector<string> vector_base {"/usr/local/bin/nii2mnc","/tmp/resolute_tmp/base.nii","/tmp/resolute_tmp/base.mnc"};
-	system_call_simple(vector_base,"/tmp/resolute_tmp/log_trash.txt");
+	vector<string> vector_base {nii2mnc,"/tmp/resolute_tmp/base.nii","/tmp/resolute_tmp/base.mnc"};
+	system_call(vector_base,"/tmp/resolute_tmp/log_trash.txt");
 	system("mincresample /tmp/resolute_tmp/base.mnc -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/base2.mnc -clobber -quiet");
 	system("mincmath -quiet -segment -const2 0.5 1.5 /tmp/resolute_tmp/base2.mnc /tmp/resolute_tmp/base.mnc -clobber");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/base.mnc > /tmp/resolute_tmp/base.raw");
 	ifstream in_base( "/tmp/resolute_tmp/base.raw", ios::in | ios::binary );
-	in_base.read( reinterpret_cast< char* >( base ), sizeof(float)*width*height*depth );
+	in_base.read( reinterpret_cast< char* >( base ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_base.close();
 
 	warp_image(basesinus.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/basesinus.nii");
-	vector<string> vector_basesinus {"/usr/local/bin/nii2mnc","/tmp/resolute_tmp/basesinus.nii","/tmp/resolute_tmp/warped_basesinus.mnc"};
-	system_call_simple(vector_basesinus,"/tmp/resolute_tmp/log_trash.txt");
+	vector<string> vector_basesinus {nii2mnc,"/tmp/resolute_tmp/basesinus.nii","/tmp/resolute_tmp/warped_basesinus.mnc"};
+	system_call(vector_basesinus,"/tmp/resolute_tmp/log_trash.txt");
 	system("mincresample /tmp/resolute_tmp/warped_basesinus.mnc -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/r2noise_rsl.mnc -clobber -quiet");
 	system("mincmath -quiet -segment -const2 0.5 1.5 /tmp/resolute_tmp/r2noise_rsl.mnc /tmp/resolute_tmp/r2noise.mnc -clobber");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/r2noise.mnc > /tmp/resolute_tmp/r2noise.raw");
 	ifstream in_r2noise( "/tmp/resolute_tmp/r2noise.raw", ios::in | ios::binary );
-	in_r2noise.read( reinterpret_cast< char* >( r2noise ), sizeof(float)*width*height*depth );
+	in_r2noise.read( reinterpret_cast< char* >( r2noise ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_r2noise.close();
 
 	warp_image(sphenoid.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/sphenoid.nii");
-	vector<string> vector_sphenoid {"/usr/local/bin/nii2mnc","/tmp/resolute_tmp/sphenoid.nii","/tmp/resolute_tmp/sphenoid.mnc"};
-	system_call_simple(vector_sphenoid,"/tmp/resolute_tmp/log_trash.txt");
+	vector<string> vector_sphenoid {nii2mnc,"/tmp/resolute_tmp/sphenoid.nii","/tmp/resolute_tmp/sphenoid.mnc"};
+	system_call(vector_sphenoid,"/tmp/resolute_tmp/log_trash.txt");
 	system("mincresample /tmp/resolute_tmp/sphenoid.mnc -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/sphenoid2.mnc -clobber -quiet");
 	system("mincmath -quiet -gt -const 0 /tmp/resolute_tmp/sphenoid2.mnc /tmp/resolute_tmp/sphenoid.mnc -clobber");
 	system("minctoraw -nonormalize -float /tmp/resolute_tmp/sphenoid.mnc > /tmp/resolute_tmp/sphenoid.raw");
 	ifstream in_sphenoid( "/tmp/resolute_tmp/sphenoid.raw", ios::in | ios::binary );
-	in_sphenoid.read( reinterpret_cast< char* >( sphenoidmask ), sizeof(float)*width*height*depth );
+	in_sphenoid.read( reinterpret_cast< char* >( sphenoidmask ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_sphenoid.close();
 	cout << " - Done" << endl;
 }
@@ -503,9 +482,9 @@ void scale_utes(){
 	int *scales = find_scale_constants();
 	//cout <<  scales[0] << " " << scales[1] << endl;
 
-	for(size_t i=0; i<width*height*depth; i++){
+	for(size_t i=0; i<WIDTH*HEIGHT*DEPTH; i++){
 		ute1_s[i] = ute1[i]/scales[0]*1000;
-		ute2_s[i] = ute2[i]/scales[0]*1000;
+		ute2_s[i] = ute2[i]/scales[1]*1000;
 		ute12_s[i] = ute1_s[i]+ute2_s[i];
 
 		R2map[i] = ( log(ute1[i])-log(ute2[i]) ) / 2.39;
@@ -523,9 +502,9 @@ int cluster_volume(int i){
 
 	int *loc_i = get_location(i);
 
-	int i_t = i-width;
+	int i_t = i-WIDTH;
 	int i_l = i-1;
-	int i_p = i-width*height;
+	int i_p = i-WIDTH*HEIGHT;
 
 	int *loc_l = get_location(i_l);
 	int *loc_t = get_location(i_t);
@@ -625,7 +604,7 @@ int cluster_volume(int i){
 
 void locate_inner_air(){
 	cout << "Calculating inner air using cluster location" << endl;
-	for(size_t i = 0; i < width*height*depth; i++){
+	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
 		arr[i] = (blur_voxel(i,ute12_s) < 600) ? 0.0 : 1.0;
 		cluster_all[i] = cluster_volume(i);
 	}
@@ -634,7 +613,7 @@ void locate_inner_air(){
 	int *clusters_arr = new int[class_label];
 	for(size_t i = 0; i < class_label; i++)
 		clusters_arr[i] = 0;
-	for(size_t i = 0; i < width*height*depth; i++){
+	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
 		cluster_all[i] = labels[(int)cluster_all[i]];
 
 		if( (int)cluster_all[i] == 0)
@@ -648,13 +627,15 @@ void locate_inner_air(){
 		}
 	}
 	delete[] clusters_arr;
+	delete[] arr;
+	delete[] labels;
 
 	cout << " - Found " << actual_clusters << " clusters." << endl;
 }
 
 void calculate_umap(){
 	cout << "Calculating tissue classes and combining masks" << endl;
-	for(size_t i=0; i<width*height*depth; i++){
+	for(size_t i=0; i<WIDTH*HEIGHT*DEPTH; i++){
 
 		/* Calculate patient volume and air regions */
 		if(blur_voxel(i,ute12_s) < 600){
@@ -728,13 +709,13 @@ void prepare_mnc_and_nifty_files(const char *argv[]){
 	system("mkdir /tmp/resolute_tmp");
 	system("touch /tmp/resolute_tmp/log_trash.txt");
 
-	vector<string> vector_ute1 {"/usr/local/bin/dcm2mnc",argv[1],"-dname","","-fname","ute1","/tmp/resolute_tmp/","-clobber"};
-	system_call(vector_ute1,"/tmp/resolute_tmp/log_trash.txt");
-	cout << " - ute1 done" << endl;
-
-	vector<string> vector_ute2 {"/usr/local/bin/dcm2mnc",argv[2],"-dname","","-fname","ute2","/tmp/resolute_tmp/","-clobber"};
+	vector<string> vector_ute2 {dcm2mnc,argv[2],"-dname","","-fname","ute2","/tmp/resolute_tmp/","-clobber"};
 	system_call(vector_ute2,"/tmp/resolute_tmp/log_trash.txt");
 	cout << " - ute2 done" << endl;
+
+	vector<string> vector_ute1 {dcm2mnc,argv[1],"-dname","","-fname","ute1","/tmp/resolute_tmp/","-clobber"};
+	system_call(vector_ute1,"/tmp/resolute_tmp/log_trash.txt");
+	cout << " - ute1 done" << endl;
 
 	cout << "Building .nii files" << endl;
 	system("mnc2nii /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/ute2.nii");
@@ -781,12 +762,12 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
 		closedir(dir);
 	}
 
-    for(size_t d = 0; d < depth; d++){
+    for(size_t d = 0; d < DEPTH; d++){
 
-    	Uint16 *slice = new Uint16[width*height];
-    	for(size_t j = 0; j < height; j++){
-        	for(size_t i = 0; i < width; i++){
-				slice[i + j*height] = umap_new[i + j*height + d*width*height];
+    	Uint16 *slice = new Uint16[WIDTH*HEIGHT];
+    	for(size_t j = 0; j < HEIGHT; j++){
+        	for(size_t i = 0; i < WIDTH; i++){
+				slice[i + j*HEIGHT] = umap_new[i + j*HEIGHT + d*WIDTH*HEIGHT];
 	      	}
 	    }
 	    DcmFileFormat fileformat;
@@ -821,10 +802,7 @@ int main(int argc, const char *argv[]) {
 	cout << "\tUTE TE2 folder: " << argv[2] << endl;
 	cout << "\tUTE Umap folder: " << argv[3] << endl;
 	cout << "\tOutput DCM dir: " << argv[4] << endl; 
-
-	//cout << "location of dcm2mnc: " << dcm2mnc << endl;
-	//cout << "location of nii2mnc: " << nii2mnc << endl;
-
+	
 	/* Create .mnc, .nii and .dcm files */
 	prepare_mnc_and_nifty_files(argv);
 
@@ -866,13 +844,8 @@ int main(int argc, const char *argv[]) {
 	delete[] R2map_LAC;
 	delete[] R2bone_in_uteair;
 	delete[] umap_new;
-	delete[] labels;
-	delete[] arr;
-	delete[] cluster_all;
 	delete[] cluster;
-	
 
-    return 0;
+	return 0;
 
 }
-

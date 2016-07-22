@@ -26,10 +26,10 @@ export PATH=/usr/bin:/usr/local/bic/bin:$PATH
 export LD_LIBRARY_PATH=/usr/lib:/usr/local/bic/lib:$LD_LIBRARY_PATH
 </code></pre>
 
-## Installation
+## Installation (currently only for linux)
 <pre><code>
 git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
-cd RESOLUTE_AC
+cd RESOLUTE_AC/linux
 mkdir build && cd build
 cmake ..
 make && sudo make install
