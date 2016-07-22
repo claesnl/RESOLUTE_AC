@@ -28,13 +28,6 @@ sudo apt-get install libnetcdf-dev libhdf5-dev hdf5-tools \
    g++ cmake libx11-dev bicpl libmni-perllib-perl
    </code></pre>
 
-### Linking
-add to PATH in .bash_profile (change depending on installation drive):</b></p>
-<pre><code>
-export PATH=/usr/bin:/usr/local/bic/bin:$PATH
-export LD_LIBRARY_PATH=/usr/lib:/usr/local/bic/lib:$LD_LIBRARY_PATH
-</code></pre>
-
 ## Installation (currently only for linux)
 <pre><code>
 git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
