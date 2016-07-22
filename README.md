@@ -9,8 +9,9 @@ The result is a DCM dataset.
 ## Usage
 The program, after compilation, can simply be called by
 <pre><code>
-RESOLUTE <path_to_TE1>
+RESOLUTE < path_to_TE1 > < path_to_TE2 > < path_to_umap > < output_folder >
 </code></pre>
+The program takes about 3 minutes to run.
 
 ## Dependencies
 ### Add MNI to source list to install autoreg
