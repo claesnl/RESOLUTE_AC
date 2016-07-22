@@ -2,7 +2,14 @@
 Create an attenuation correction map from UTE TE sequences
 
 ## Introduction
-TBC.
+RESOLUTE is a tool for creating MR attenuation maps from UTE TE images.
+The TE images are segmented for brain, CSF air, soft tissue and continuous bone values.
+The result is a DCM dataset.
+
+## Usage
+The program, after compilation, can simply be called by
+<pre><code>
+RESOLUTE \<path_to_TE1\>
 
 ## Dependencies
 ### Add MNI to source list to install autoreg
