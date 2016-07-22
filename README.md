@@ -9,7 +9,8 @@ The result is a DCM dataset.
 ## Usage
 The program, after compilation, can simply be called by
 <pre><code>
-RESOLUTE \<path_to_TE1\>
+RESOLUTE <path_to_TE1>
+</code></pre>
 
 ## Dependencies
 ### Add MNI to source list to install autoreg
