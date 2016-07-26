@@ -14,13 +14,25 @@ RESOLUTE < path_to_TE1 > < path_to_TE2 > < path_to_umap > < output_folder >
 The program takes about 3 minutes to run.
 
 ## Installation (Ubuntu and CentOS)
-Install below dependencies first. 
-If on CentOS, and you wish to use the configure file to install, run the first two lines before proceeding to the dependencies.
+
+### Ubuntu 64 Bit
+Install below dependencies first. Then:
 <pre><code>
 git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
-cd RESOLUTE_AC/< os_type >
+cd RESOLUTE_AC/linux
 mkdir build && cd build
 cmake ..
+make && sudo make install
+</code></pre>
+
+### CentOS
+If you wish to use the configure file to install the dependencies, run the following code. Otherwise, install dependencies first (see below).
+<pre><code>
+git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
+cd RESOLUTE_AC/centos
+./configure
+mkdir build && cd build
+cmake .. -DDCMTK_DIR=/usr/local/include/dcmtk/
 make && sudo make install
 </code></pre>
 
