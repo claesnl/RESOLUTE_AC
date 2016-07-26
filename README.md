@@ -54,7 +54,6 @@ mkdir antsbin && cd antsbin
 ccmake ../ANTs/
 make -j 4
 </code></pre>
-And add link to antsbin to PATH in bash_profile.
 
 #### DCMTK:
 <pre><code>
@@ -71,9 +70,9 @@ wget http://packages.bic.mni.mcgill.ca/minc-toolkit/RPM/minc-toolkit-1.0.08-2016
 sudo rpm -Uvh minc-toolkit-1.0.08-20160205-CentOS_6.7-x86_64.rpm
 </code></pre>
 
-Add to .bash_profile
+Add to .bash_profile (also add ANTs)
 <pre><code>
-PATH=$PATH:/opt/minc/bin
+PATH=$PATH:/opt/minc/bin:$HOME/antsbin/bin
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/minc/lib
 PERL5LIB=$PERL5LIB:/opt/minc/perl
 export PATH
@@ -94,6 +93,10 @@ mincblur -fwhm 4 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mn
 mincblur -fwhm 8 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_8
 mincblur -fwhm 16 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_16
 sudo mv icbm_avg_152_t1_tal_lin_* /opt/minc/share/mni-models/
+sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_2_mask.mnc
+sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_4_mask.mnc
+sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_8_mask.mnc
+sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_16_mask.mnc
 </code></pre>
 
 #### Add links and install ctime.pl:
@@ -101,7 +104,8 @@ sudo mv icbm_avg_152_t1_tal_lin_* /opt/minc/share/mni-models/
 sudo mkdir /opt/minc/etc/mni_autoreg
 sudo ln -s /opt/minc/etc/mritotal.default.cfg /opt/minc/etc/mni_autoreg/mritotal.default.cfg
 sudo ln -s /opt/minc/etc/mritotal.icbm.cfg /opt/minc/etc/mni_autoreg/mritotal.icbm.cfg
-cpan install Time::CTime
+get http://perl5.git.perl.org/APC/perl-5.10.x/lib/ctime.pl
+sudo mv ctime.pl /usr/share/perl5/
 </code></pre>
 
 ## Installation (Ubuntu and CentOS)
