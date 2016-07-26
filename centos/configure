@@ -1,7 +1,7 @@
 #! /bin/sh
 
 echo "Installing yum dependencies"
-sudo yum install cmake flex bison git wget freeglut freeglut-devel libXi-devel libXi libXmu libXmu-devel libXrandr libXrandr.devel libXpm-devel libXft-devel libXres-devel libXcomposite-devel redhat-lsb
+sudo yum install cmake flex bison git wget unzip freeglut freeglut-devel libXi-devel libXi libXmu libXmu-devel libXrandr libXrandr.devel libXpm-devel libXft-devel libXres-devel libXcomposite-devel redhat-lsb
 
 echo "Downloading ANTs"
 if hash ANTS 2>/dev/null; then
@@ -12,6 +12,8 @@ else
 	ccmake ../ANTs/ 
 	make -j 4
 	cd ..
+	mv antsbin ~/
+	echo 'export PATH=$PATH:$HOME/antsbin/bin' >> ~/.bash_profile
 fi
 
 echo "Downloading DCMTK"
@@ -19,9 +21,7 @@ if hash dcmdump 2>/dev/null; then
 	echo " - DCMTK already installed"
 else
 	git clone https://github.com/commontk/DCMTK.git 
-	(cd DCMTK && ./configure && make all) || exit 1
-	sudo make install-all
-	cd ..
+	(cd DCMTK && ./configure && make all && sudo make install-all) || exit 1
 fi
 
 echo "Installing perl :: ctime library"
@@ -39,7 +39,7 @@ else
 	wget http://packages.bic.mni.mcgill.ca/minc-toolkit/RPM/minc-toolkit-1.0.08-20160205-CentOS_6.7-x86_64.rpm
 	sudo rpm -Uvh minc-toolkit-1.0.08-20160205-CentOS_6.7-x86_64.rpm
 
-	echo 'export PATH=$PATH:/opt/minc/bin:$HOME/antsbin/bin' >> ~/.bash_profile
+	echo 'export PATH=$PATH:/opt/minc/bin' >> ~/.bash_profile
 	echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/minc/lib' >> ~/.bash_profile
 	echo 'export PERL5LIB=$PERL5LIB:/opt/minc/perl' >> ~/.bash_profile
 	source ~/.bash_profile
@@ -62,13 +62,16 @@ else
 	cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_8_mask.mnc
 	cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_16_mask.mnc
 	cd ..
-	sudo mv -R mni-models /opt/minc/share/
+	sudo mv mni-models /opt/minc/share/
 fi
 
-if [ "/opt/minc/etc/mni_autoreg" ]; then
+echo "Installing mritotal config files"
+if [ -f "/opt/minc/etc/mni_autoreg/mritotal.default.cfg" ]; then
 		echo " - mni_autoreg already installed"
 else
-	sudo mkdir /opt/minc/etc/mni_autoreg
+	if [ ! -d "/opt/minc/etc/mni_autoreg" ]; then
+		sudo mkdir /opt/minc/etc/mni_autoreg
+	fi
 	sudo ln -s /opt/minc/etc/mritotal.default.cfg /opt/minc/etc/mni_autoreg/mritotal.default.cfg
 	sudo ln -s /opt/minc/etc/mritotal.icbm.cfg /opt/minc/etc/mni_autoreg/mritotal.icbm.cfg
 fi

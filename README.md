@@ -26,7 +26,9 @@ make && sudo make install
 </code></pre>
 
 ### CentOS
-If you wish to use the configure file to install the dependencies, run the following code. Otherwise, install dependencies first (see below).
+If you wish to use the configure file to install the dependencies (third line), run the following code. During the `./configure` step, you will be prompted for sudo password and ccmake GUI input several times. The total run-time to install is about 20 minutes.
+
+Otherwise, install dependencies first (see below) and skip the third line.
 <pre><code>
 git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
 cd RESOLUTE_AC/centos

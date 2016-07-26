@@ -89,7 +89,7 @@ install(FILES ../linux/bin/mni_icbm152_t1_tal_nlin_sym_09a_mask.nii DESTINATION 
 install(FILES ../linux/bin/mni_icbm152_t1_tal_nlin_sym_09a.mnc DESTINATION /usr/local/share/RESOLUTE)
 
 # MNI-models (only for CentOS)
-install(FILES bin/mritotal.cfg DESTINATION /opt/minc/etc/mni-models/)
+install(FILES bin/mritotal.cfg DESTINATION /opt/minc/etc/mni_autoreg/)
 
 
 
