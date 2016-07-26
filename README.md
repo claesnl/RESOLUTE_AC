@@ -38,7 +38,7 @@ cmake .. -DDCMTK_DIR=/usr/local/include/dcmtk/
 make && sudo make install
 </code></pre>
 
-### From existing RESOLUTE install
+## Install from existing RESOLUTE version
 <pre><code>
 cd RESOLUTE_AC
 git clean -f -d

@@ -1,5 +1,13 @@
 /*
 * Build RESOLUTE umap
+*
+* VERSION 	:: 	2.0.1
+* BUILD 	::	26-July-2016
+* AUTHOR	:: 	Claes Ladefoged
+*
+* Changes	::
+*	v2.0.1	::	26-July-2016 :: Added automatic build scripts. Working build now for Ubuntu and CentOS.
+*
 */
 
 #include <iostream>
