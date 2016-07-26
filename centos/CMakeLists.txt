@@ -88,6 +88,25 @@ install(FILES ../linux/bin/mni_icbm152_t1_tal_nlin_sym_09a.nii DESTINATION /usr/
 install(FILES ../linux/bin/mni_icbm152_t1_tal_nlin_sym_09a_mask.nii DESTINATION /usr/local/share/RESOLUTE)
 install(FILES ../linux/bin/mni_icbm152_t1_tal_nlin_sym_09a.mnc DESTINATION /usr/local/share/RESOLUTE)
 
+# MNI-models (only for CentOS)
+install(FILES bin/mritotal.cfg DESTINATION /opt/minc/etc/)
+install(FILES bin/icbm_avg_152_t1_tal_lin_16_blur.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_16_mask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_2_blur.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_2_dxyz.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_2_mask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_4_blur.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_4_dxyz.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_4_mask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_8_blur.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_8_dxyz.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_8_mask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_headmask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_headmask.mnc.gz DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_mask.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin_mask.mnc.gz DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin.mnc DESTINATION /opt/minc/share/mni-models)
+install(FILES bin/icbm_avg_152_t1_tal_lin.mnc.gz DESTINATION /opt/minc/share/mni-models)
 
 
 
