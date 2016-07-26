@@ -77,7 +77,7 @@ sudo yum install \
 <pre><code>
 git clone git://github.com/stnava/ANTs.git
 mkdir antsbin && cd antsbin
-ccmake ../ANTs/
+cmake ../ANTs/
 make -j 4
 echo 'export PATH=$PATH:$HOME/antsbin/bin' >> ~/.bash_profile
 </code></pre>
