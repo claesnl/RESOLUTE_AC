@@ -38,6 +38,14 @@ cmake .. -DDCMTK_DIR=/usr/local/include/dcmtk/
 make && sudo make install
 </code></pre>
 
+### From existing RESOLUTE install
+<pre><code>
+cd RESOLUTE_AC
+git clean -f -d
+git pull origin master
+</code></pre>
+and repeat the build step from above. 
+
 ## Dependencies
 
 ### Ubuntu:
