@@ -13,6 +13,17 @@ RESOLUTE < path_to_TE1 > < path_to_TE2 > < path_to_umap > < output_folder >
 </code></pre>
 The program takes about 3 minutes to run.
 
+## Installation (Ubuntu and CentOS)
+Install below dependencies first. 
+If on CentOS, and you wish to use the configure file to install, run the first two lines before proceeding to the dependencies.
+<pre><code>
+git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
+cd RESOLUTE_AC/< os_type >
+mkdir build && cd build
+cmake ..
+make && sudo make install
+</code></pre>
+
 ## Dependencies
 
 ### Ubuntu:
@@ -107,15 +118,6 @@ sudo ln -s /opt/minc/etc/mritotal.default.cfg /opt/minc/etc/mni_autoreg/mritotal
 sudo ln -s /opt/minc/etc/mritotal.icbm.cfg /opt/minc/etc/mni_autoreg/mritotal.icbm.cfg
 get http://perl5.git.perl.org/APC/perl-5.10.x/lib/ctime.pl
 sudo mv ctime.pl /usr/share/perl5/
-</code></pre>
-
-## Installation (Ubuntu and CentOS)
-<pre><code>
-git clone --recursive git://github.com/claesnl/RESOLUTE_AC.git RESOLUTE_AC
-cd RESOLUTE_AC/< os_type >
-mkdir build && cd build
-cmake ..
-make && sudo make install
 </code></pre>
 
 ## Trouble shooting
