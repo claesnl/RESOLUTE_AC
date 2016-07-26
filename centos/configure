@@ -9,7 +9,7 @@ if hash ANTS 2>/dev/null; then
 else
 	git clone git://github.com/stnava/ANTs.git
 	mkdir antsbin && cd antsbin
-	ccmake ../ANTs/ 
+	cmake ../ANTs/ 
 	make -j 4
 	cd ..
 	mv antsbin ~/
