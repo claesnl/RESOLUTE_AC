@@ -63,7 +63,7 @@ All of the below dependencies and programs can be installed with `./configure` u
 <pre><code>
 sudo yum install \
  cmake flex bison \
- git wget \
+ git wget unzip \
  freeglut freeglut-devel \
  libXi-devel libXi \
  libXmu libXmu-devel \
@@ -79,6 +79,7 @@ git clone git://github.com/stnava/ANTs.git
 mkdir antsbin && cd antsbin
 ccmake ../ANTs/
 make -j 4
+echo 'export PATH=$PATH:$HOME/antsbin/bin' >> ~/.bash_profile
 </code></pre>
 
 #### DCMTK:
@@ -94,35 +95,29 @@ sudo make install-all
 <pre><code>
 wget http://packages.bic.mni.mcgill.ca/minc-toolkit/RPM/minc-toolkit-1.0.08-20160205-CentOS_6.7-x86_64.rpm
 sudo rpm -Uvh minc-toolkit-1.0.08-20160205-CentOS_6.7-x86_64.rpm
-</code></pre>
 
-Add to .bash_profile (also add ANTs)
-<pre><code>
-PATH=$PATH:/opt/minc/bin:$HOME/antsbin/bin
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/minc/lib
-PERL5LIB=$PERL5LIB:/opt/minc/perl
-export PATH
-export LD_LIBRARY_PATH
-export PERL5LIB
+echo 'export PATH=$PATH:/opt/minc/bin' >> ~/.bash_profile
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/minc/lib' >> ~/.bash_profile
+echo 'export PERL5LIB=$PERL5LIB:/opt/minc/perl' >> ~/.bash_profile
+source ~/.bash_profile
 </code></pre>
-and load with: `source .bash_profile`
 
 #### mni-models:
 <pre><code>
+mkdir mni-models && cd mni-models
 wget http://packages.bic.mni.mcgill.ca/mni-models/icbm152/mni_icbm152_lin_minc1.zip
 unzip mni_icbm152_lin_minc1.zip
-sudo mkdir /opt/minc/share/mni-models/
-sudo mv icbm_avg_152_* /opt/minc/share/mni-models/
 rm README COPYING
-mincblur -fwhm 2 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_2
-mincblur -fwhm 4 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_4
-mincblur -fwhm 8 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_8
-mincblur -fwhm 16 -gradient /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_16
-sudo mv icbm_avg_152_t1_tal_lin_* /opt/minc/share/mni-models/
-sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_2_mask.mnc
-sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_4_mask.mnc
-sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_8_mask.mnc
-sudo cp /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_mask.mnc /opt/minc/share/mni-models/icbm_avg_152_t1_tal_lin_16_mask.mnc
+mincblur -fwhm 2 -gradient icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_2
+mincblur -fwhm 4 -gradient icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_4
+mincblur -fwhm 8 -gradient icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_8
+mincblur -fwhm 16 -gradient icbm_avg_152_t1_tal_lin.mnc icbm_avg_152_t1_tal_lin_16
+cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_2_mask.mnc
+cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_4_mask.mnc
+cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_8_mask.mnc
+cp icbm_avg_152_t1_tal_lin_mask.mnc icbm_avg_152_t1_tal_lin_16_mask.mnc
+cd ..
+sudo mv mni-models /opt/minc/share/
 </code></pre>
 
 #### Add links and install ctime.pl:
