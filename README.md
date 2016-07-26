@@ -32,6 +32,7 @@ sudo apt-get install libnetcdf-dev libhdf5-dev hdf5-tools \
    </code></pre>
 
 ### CentOS:
+All of the below dependencies and programs can be installed with `./configure` under the centos folder. Manual install instructions shown below.
 
 #### Dependencies:
 <pre><code>
