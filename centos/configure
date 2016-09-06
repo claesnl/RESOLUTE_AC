@@ -1,7 +1,13 @@
 #! /bin/sh
 
 echo "Installing yum dependencies"
-sudo yum install cmake flex bison git wget unzip freeglut freeglut-devel libXi-devel libXi libXmu libXmu-devel libXrandr libXrandr.devel libXpm-devel libXft-devel libXres-devel libXcomposite-devel redhat-lsb
+sudo yum install gcc cmake flex bison git wget unzip freeglut freeglut-devel libXi-devel libXi libXmu libXmu-devel libXrandr libXrandr.devel libXpm-devel libXft-devel libXres-devel libXcomposite-devel redhat-lsb
+sudo yum group install "Development Tools"
+
+echo "Installing zlib"
+wget http://zlib.net/zlib-1.2.8.tar.gz
+tar -zvxf zlib-1.2.8.tar.gz
+(cd zlib-1.2.8 && ./configure) || exit 1
 
 echo "Downloading ANTs"
 if hash ANTS 2>/dev/null; then
@@ -12,8 +18,8 @@ else
 	cmake ../ANTs/ 
 	make -j 4
 	cd ..
-	mv antsbin ~/
-	echo 'export PATH=$PATH:$HOME/antsbin/bin' >> ~/.bash_profile
+	mv antsbin /usr/local/
+	echo 'export PATH=$PATH:/usr/local/antsbin/bin' >> ~/.bash_profile
 fi
 
 echo "Downloading DCMTK"
