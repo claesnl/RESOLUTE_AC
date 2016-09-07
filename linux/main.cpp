@@ -750,6 +750,7 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
 			{
 
 				string dcmfile_full = string(uteumapfolder) + string(dcmfile);
+				string filetype = string(dcmfile+strlen(dcmfile)-3);
 				int instance_number;
 				DcmFileFormat fileformat;
   				if (fileformat.loadFile(dcmfile_full.c_str()).good()){
@@ -758,13 +759,11 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
   					if (dataset->findAndGetSint32(DCM_InstanceNumber, value).good()){
 
   						char executable[200];
-    					snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.dcm",dcmfile_full.c_str(),out_folder,static_cast<int>(value));
-  						//cout << dcmfile << " -> " << out_file << endl;
-  						//cout << executable << endl;
-  						system(executable);
+						snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.%s",dcmfile_full.c_str(),out_folder,static_cast<int>(value),filetype);
+						system(executable);
 
-  					}
-  				}
+					}
+				}
 			}
 		}
 		closedir(dir);
