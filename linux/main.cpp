@@ -759,7 +759,7 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
   					if (dataset->findAndGetSint32(DCM_InstanceNumber, value).good()){
 
   						char executable[200];
-						snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.%s",dcmfile_full.c_str(),out_folder,static_cast<int>(value),filetype.c_str());
+						snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.dcm",dcmfile_full.c_str(),out_folder,static_cast<int>(value));
 						system(executable);
 
 					}
