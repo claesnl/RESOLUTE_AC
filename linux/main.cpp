@@ -62,6 +62,7 @@ float *R2map_LAC = new float[ WIDTH*HEIGHT*DEPTH ];
 float *R2bone_in_uteair = new float[ WIDTH*HEIGHT*DEPTH ];
 
 float *umap_new = new float[ WIDTH*HEIGHT*DEPTH ];
+float *umap_new_blurred = new float[ WIDTH*HEIGHT*DEPTH ];
 
 int class_label = 0;
 int *labels = new int[20000];
@@ -408,6 +409,33 @@ float blur_voxel(int i, float *arr){
 	}
 }
 
+float gaussian_blur_voxel(int i, float *arr){
+
+	int *loc_i = get_location(i);
+
+	int i_tl = i-192-1;
+	int i_tr = i-192+1;
+	int i_t = i-192;
+	int i_l = i-1;
+	int i_r = i+1;
+	int i_bl = i+192-1;
+	int i_b = i+192;
+	int i_br = i+192+1;
+	int *loc_i_tl = get_location(i_tl);
+	int *loc_i_br = get_location(i_br);
+	if(loc_i[0] == loc_i_tl[0] && loc_i[0] == loc_i_br[0] // same slice
+		&& loc_i[1] == (loc_i_tl[1]+1) && loc_i[1] == (loc_i_br[1]-1) // 1 row diff
+		&& loc_i[2] == (loc_i_tl[2]+1) && loc_i[2] == (loc_i_br[2]-1) // 1 col diff
+		&& loc_i[1] > 0 && loc_i[2] > 0) // top left corners
+	{
+		return 0.0625*arr[i_tl]+0.125*arr[i_t]+0.0625*arr[i_tr]
+			 + 0.125*arr[i_l]+0.25*arr[i]+0.125*arr[i_r]
+		  	 + 0.0625*arr[i_bl]+0.125*arr[i_b]+0.0625*arr[i_br];
+	} else {
+		return arr[i];
+	}
+}
+
 void load_raw_files(){
 	ifstream in( "/tmp/resolute_tmp/ute1.raw", ios::in | ios::binary );
 	in.read( reinterpret_cast< char* >( ute1 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
@@ -709,6 +737,10 @@ void calculate_umap(){
 
 	}
 
+	/* Blur the output with a 3mm gaussian */
+	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
+		umap_new_blurred[i] = gaussian_blur_voxel(i,umap_new);
+	}
 }
 
 void prepare_mnc_and_nifty_files(const char *argv[]){
@@ -774,7 +806,7 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
     	Uint16 *slice = new Uint16[WIDTH*HEIGHT];
     	for(size_t j = 0; j < HEIGHT; j++){
         	for(size_t i = 0; i < WIDTH; i++){
-				slice[i + j*HEIGHT] = umap_new[i + j*HEIGHT + d*WIDTH*HEIGHT];
+				slice[i + j*HEIGHT] = umap_new_blurred[i + j*HEIGHT + d*WIDTH*HEIGHT];
 	      	}
 	    }
 	    DcmFileFormat fileformat;
@@ -851,6 +883,7 @@ int main(int argc, const char *argv[]) {
 	delete[] R2map_LAC;
 	delete[] R2bone_in_uteair;
 	delete[] umap_new;
+	delete[] umap_new_blurred;
 	delete[] cluster;
 
 	return 0;
