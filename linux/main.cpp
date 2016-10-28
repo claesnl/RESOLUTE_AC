@@ -409,7 +409,7 @@ float blur_voxel(int i, float *arr){
 	}
 }
 
-float gaussian_blur_voxel(int i, float *arr){
+float gaussian_blur_voxel5x5(int i, float *arr){
 
 	int *loc_i = get_location(i);
 
@@ -455,6 +455,84 @@ float gaussian_blur_voxel(int i, float *arr){
 		     + 0.0369*arr[i_ll]+0.0620*arr[i_l]+0.0738*arr[i]+0.0620*arr[i_r]+0.0369*arr[i_rr]
 		     + 0.0310*arr[i_bll]+0.0522*arr[i_bl]+0.0620*arr[i_b]+0.0522*arr[i_br]+0.0310*arr[i_brr]
 		     + 0.0184*arr[i_bbll]+0.0310*arr[i_bbl]+0.0369*arr[i_bb]+0.0310*arr[i_bbr]+0.0184*arr[i_bbrr];
+	} else {
+		return arr[i];
+	}
+}
+
+float gaussian_blur_voxel(int i, float *arr){
+
+	int *loc_i = get_location(i);
+
+	int i_uuu   = i-192-192-192;
+	int i_uuul = i_uuu-1;
+	int i_uuull = i_uuu-2;
+	int i_uuulll = i_uuu-3;
+	int i_uuur = i_uuu+1;
+	int i_uuurr = i_uuu+2;
+	int i_uuurrr = i_uuu+3;
+
+	int i_uu   = i-192-192;
+	int i_uul = i_uu-1;
+	int i_uull = i_uu-2;
+	int i_uulll = i_uu-3;
+	int i_uur = i_uu+1;
+	int i_uurr = i_uu+2;
+	int i_uurrr = i_uu+3;
+
+	int i_u   = i-192;
+	int i_ul = i_u-1;
+	int i_ull = i_u-2;
+	int i_ulll = i_u-3;
+	int i_ur = i_u+1;
+	int i_urr = i_u+2;
+	int i_urrr = i_u+3;
+
+	int i_l = i-1;
+	int i_ll = i-2;
+	int i_lll = i-3;
+	int i_r = i+1;
+	int i_rr = i+2;
+	int i_rrr = i+3;
+
+	int i_b   = i+192;
+	int i_bl = i_b-1;
+	int i_bll = i_b-2;
+	int i_blll = i_b-3;
+	int i_br = i_b+1;
+	int i_brr = i_b+2;
+	int i_brrr = i_b+3;
+
+	int i_bb   = i+192+192;
+	int i_bbl = i_bb-1;
+	int i_bbll = i_bb-2;
+	int i_bblll = i_bb-3;
+	int i_bbr = i_bb+1;
+	int i_bbrr = i_bb+2;
+	int i_bbrrr = i_bb+3;
+
+	int i_bbb   = i+192+192+192;
+	int i_bbbl = i_bbb-1;
+	int i_bbbll = i_bbb-2;
+	int i_bbblll = i_bbb-3;
+	int i_bbbr = i_bbb+1;
+	int i_bbbrr = i_bbb+2;
+	int i_bbbrrr = i_bbb+3;
+
+	int *loc_i_uull = get_location(i_uull);
+	int *loc_i_bbrr = get_location(i_bbrr);
+	if(loc_i[0] == loc_i_uull[0] && loc_i[0] == loc_i_bbrr[0] // same slice
+		&& loc_i[1] == (loc_i_uull[1]+2) && loc_i[1] == (loc_i_bbrr[1]-2) // 1 row diff
+		&& loc_i[2] == (loc_i_uull[2]+2) && loc_i[2] == (loc_i_bbrr[2]-2) // 1 col diff
+		&& loc_i[1] > 0 && loc_i[2] > 0) // top left corners
+	{
+		return 0.0026*arr[i_uuulll]+0.0062*arr[i_uuull]+0.0105*arr[i_uuul]+0.0125*arr[i_uuu]+0.0105*arr[i_uuur]+0.0062*arr[i_uuurr]+0.0026*arr[i_uuurrr]
+		     + 0.0062*arr[i_uulll]+0.0149*arr[i_uull]+0.0250*arr[i_uul]+0.0297*arr[i_uu]+0.0250*arr[i_uur]+0.0149*arr[i_uurr]+0.0062*arr[i_uurrr]
+		     + 0.0105*arr[i_ulll]+0.0250*arr[i_ull]+0.0420*arr[i_ul]+0.0500*arr[i_u]+0.0420*arr[i_ur]+0.0250*arr[i_urr]+0.0105*arr[i_urrr]
+		     + 0.0125*arr[i_lll]+0.0297*arr[i_ll]+0.0500*arr[i_l]+0.0594*arr[i]+0.0500*arr[i_r]+0.0297*arr[i_rr]+0.0125*arr[i_rrr]
+		     + 0.0105*arr[i_blll]+0.0250*arr[i_bll]+0.0420*arr[i_bl]+0.0500*arr[i_b]+0.0420*arr[i_br]+0.0250*arr[i_brr]+0.0105*arr[i_brrr]
+ 		     + 0.0062*arr[i_bblll]+0.0149*arr[i_bbll]+0.0250*arr[i_bbl]+0.0297*arr[i_bb]+0.0250*arr[i_bbr]+0.0149*arr[i_bbrr]+0.0062*arr[i_bbrrr]
+		     + 0.0026*arr[i_bbblll]+0.0062*arr[i_bbbll]+0.0105*arr[i_bbbl]+0.0125*arr[i_bbb]+0.0105*arr[i_bbbr]+0.0062*arr[i_bbbrr]+0.0026*arr[i_bbbrrr];
 	} else {
 		return arr[i];
 	}
