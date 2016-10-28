@@ -454,7 +454,7 @@ float gaussian_blur_voxel(int i, float *arr){
 		     + 0.0310*arr[i_ull]+0.0522*arr[i_ul]+0.0620*arr[i_u]+0.0522*arr[i_ur]+0.0310*arr[i_urr]
 		     + 0.0369*arr[i_ll]+0.0620*arr[i_l]+0.0738*arr[i]+0.0620*arr[i_r]+0.0369*arr[i_rr]
 		     + 0.0310*arr[i_bll]+0.0522*arr[i_bl]+0.0620*arr[i_b]+0.0522*arr[i_br]+0.0310*arr[i_brr]
-		     + 0.0184*arr[i_bbll]+0.0310*arr[i_bbl]+0.0369*arr[i_bb]+0.0310*arr[i_bbr]+0.0184*arr[i_bbrr]
+		     + 0.0184*arr[i_bbll]+0.0310*arr[i_bbl]+0.0369*arr[i_bb]+0.0310*arr[i_bbr]+0.0184*arr[i_bbrr];
 	} else {
 		return arr[i];
 	}
