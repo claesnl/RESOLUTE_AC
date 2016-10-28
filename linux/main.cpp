@@ -413,24 +413,48 @@ float gaussian_blur_voxel(int i, float *arr){
 
 	int *loc_i = get_location(i);
 
-	int i_tl = i-192-1;
-	int i_tr = i-192+1;
-	int i_t = i-192;
+	int i_uu   = i-192-192;
+	int i_uul = i_uu-1;
+	int i_uull = i_uu-2;
+	int i_uur = i_uu+1;
+	int i_uurr = i_uu+2;
+
+	int i_u   = i-192;
+	int i_ul = i_u-1;
+	int i_ull = i_u-2;
+	int i_ur = i_u+1;
+	int i_urr = i_u+2;
+
 	int i_l = i-1;
+	int i_ll = i-2;
 	int i_r = i+1;
-	int i_bl = i+192-1;
-	int i_b = i+192;
-	int i_br = i+192+1;
-	int *loc_i_tl = get_location(i_tl);
-	int *loc_i_br = get_location(i_br);
-	if(loc_i[0] == loc_i_tl[0] && loc_i[0] == loc_i_br[0] // same slice
-		&& loc_i[1] == (loc_i_tl[1]+1) && loc_i[1] == (loc_i_br[1]-1) // 1 row diff
-		&& loc_i[2] == (loc_i_tl[2]+1) && loc_i[2] == (loc_i_br[2]-1) // 1 col diff
+	int i_rr = i+2;
+
+	int i_b   = i+192;
+	int i_bl = i_b-1;
+	int i_bll = i_b-2;
+	int i_br = i_b+1;
+	int i_brr = i_b+2;
+
+	int i_bb   = i+192+192;
+	int i_bbl = i_bb-1;
+	int i_bbll = i_bb-2;
+	int i_bbr = i_bb+1;
+	int i_bbrr = i_bb+2;
+
+
+	int *loc_i_uull = get_location(i_uull);
+	int *loc_i_bbrr = get_location(i_bbrr);
+	if(loc_i[0] == loc_i_uull[0] && loc_i[0] == loc_i_bbrr[0] // same slice
+		&& loc_i[1] == (loc_i_uull[1]+2) && loc_i[1] == (loc_i_bbrr[1]-2) // 1 row diff
+		&& loc_i[2] == (loc_i_uull[2]+2) && loc_i[2] == (loc_i_bbrr[2]-2) // 1 col diff
 		&& loc_i[1] > 0 && loc_i[2] > 0) // top left corners
 	{
-		return 0.0625*arr[i_tl]+0.125*arr[i_t]+0.0625*arr[i_tr]
-			 + 0.125*arr[i_l]+0.25*arr[i]+0.125*arr[i_r]
-		  	 + 0.0625*arr[i_bl]+0.125*arr[i_b]+0.0625*arr[i_br];
+		return 0.0184*arr[i_uull]+0.0310*arr[i_uul]+0.0369*arr[i_uu]+0.0310*arr[i_uur]+0.0184*arr[i_uurr]
+		     + 0.0310*arr[i_ull]+0.0522*arr[i_ul]+0.0620*arr[i_u]+0.0522*arr[i_ur]+0.0310*arr[i_urr]
+		     + 0.0369*arr[i_ll]+0.0620*arr[i_l]+0.0738*arr[i]+0.0620*arr[i_r]+0.0369*arr[i_rr]
+		     + 0.0310*arr[i_bll]+0.0522*arr[i_bl]+0.0620*arr[i_b]+0.0522*arr[i_br]+0.0310*arr[i_brr]
+		     + 0.0184*arr[i_bbll]+0.0310*arr[i_bbl]+0.0369*arr[i_bb]+0.0310*arr[i_bbr]+0.0184*arr[i_bbrr]
 	} else {
 		return arr[i];
 	}
