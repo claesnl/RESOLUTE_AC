@@ -1,6 +1,3 @@
-# This is example of the cmake file that can be used for basic compilation of a C++11 program
-# that uses DCMTK 3.6.0  avaliable in ubuntu 14.04
-
 cmake_minimum_required(VERSION 2.8)
 
 # name of the cpp project
