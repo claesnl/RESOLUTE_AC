@@ -1,12 +1,13 @@
 /*
 * Build RESOLUTE umap
 *
-* VERSION 	:: 	2.0.1
-* BUILD 	::	26-July-2016
+* VERSION 	:: 	2.0.2
+* BUILD 	::	15-November-2016
 * AUTHOR	:: 	Claes Ladefoged
 *
 * Changes	::
-*	v2.0.1	::	26-July-2016 :: Added automatic build scripts. Working build now for Ubuntu and CentOS.
+*	v2.0.1	::	26-July-2016 		:: Added automatic build scripts. Working build now for Ubuntu and CentOS.
+*	v2.0.2	::	15-November-2016 	:: Added 3mm Gaussian 3D blurring of final result.
 *
 */
 
@@ -32,12 +33,13 @@
 
 using namespace std;
 
+/* Define the size of the input UTE images */
 #define WIDTH 192
 #define HEIGHT 192
 #define DEPTH 192
 
+/* Initialize the arrays used globally throughout */
 float *points;
-
 float *ute1 = new float[ WIDTH*HEIGHT*DEPTH ];
 float *ute2 = new float[ WIDTH*HEIGHT*DEPTH ];
 
@@ -62,6 +64,8 @@ float *R2map_LAC = new float[ WIDTH*HEIGHT*DEPTH ];
 float *R2bone_in_uteair = new float[ WIDTH*HEIGHT*DEPTH ];
 
 float *umap_new = new float[ WIDTH*HEIGHT*DEPTH ];
+float *umap_new_blur_x = new float[ WIDTH*HEIGHT*DEPTH ];
+float *umap_new_blur_xy = new float[ WIDTH*HEIGHT*DEPTH ];
 float *umap_new_blurred = new float[ WIDTH*HEIGHT*DEPTH ];
 
 int class_label = 0;
@@ -69,6 +73,14 @@ int *labels = new int[20000];
 float *arr = new float[ WIDTH*HEIGHT*DEPTH ];
 float *cluster_all = new float[ WIDTH*HEIGHT*DEPTH ];
 float *cluster = new float[ WIDTH*HEIGHT*DEPTH ];
+
+/* The FWHM in mm of the gaussian blur of the final result */
+float FWHM = 3.0; 
+float sigma = FWHM/sqrt(8*log(2));
+const int W = 7;
+double kernel1D[W];
+double mean = W/2;
+double sum1D = 0.0;
 
 string atlasNII="";
 string atlasMNC="";
@@ -87,7 +99,6 @@ string exec_with_output(const char* cmd) {
         if (fgets(buffer, 128, pipe.get()) != NULL)
             result += buffer;
     }
-    //cout << "exec output: " << result << endl;
     result.erase(std::remove(result.begin(), result.end(), '\n'), result.end());
     return result;
 }
@@ -409,133 +420,36 @@ float blur_voxel(int i, float *arr){
 	}
 }
 
-float gaussian_blur_voxel5x5(int i, float *arr){
-
-	int *loc_i = get_location(i);
-
-	int i_uu   = i-192-192;
-	int i_uul = i_uu-1;
-	int i_uull = i_uu-2;
-	int i_uur = i_uu+1;
-	int i_uurr = i_uu+2;
-
-	int i_u   = i-192;
-	int i_ul = i_u-1;
-	int i_ull = i_u-2;
-	int i_ur = i_u+1;
-	int i_urr = i_u+2;
-
-	int i_l = i-1;
-	int i_ll = i-2;
-	int i_r = i+1;
-	int i_rr = i+2;
-
-	int i_b   = i+192;
-	int i_bl = i_b-1;
-	int i_bll = i_b-2;
-	int i_br = i_b+1;
-	int i_brr = i_b+2;
-
-	int i_bb   = i+192+192;
-	int i_bbl = i_bb-1;
-	int i_bbll = i_bb-2;
-	int i_bbr = i_bb+1;
-	int i_bbrr = i_bb+2;
-
-
-	int *loc_i_uull = get_location(i_uull);
-	int *loc_i_bbrr = get_location(i_bbrr);
-	if(loc_i[0] == loc_i_uull[0] && loc_i[0] == loc_i_bbrr[0] // same slice
-		&& loc_i[1] == (loc_i_uull[1]+2) && loc_i[1] == (loc_i_bbrr[1]-2) // 1 row diff
-		&& loc_i[2] == (loc_i_uull[2]+2) && loc_i[2] == (loc_i_bbrr[2]-2) // 1 col diff
-		&& loc_i[1] > 0 && loc_i[2] > 0) // top left corners
-	{
-		return 0.0184*arr[i_uull]+0.0310*arr[i_uul]+0.0369*arr[i_uu]+0.0310*arr[i_uur]+0.0184*arr[i_uurr]
-		     + 0.0310*arr[i_ull]+0.0522*arr[i_ul]+0.0620*arr[i_u]+0.0522*arr[i_ur]+0.0310*arr[i_urr]
-		     + 0.0369*arr[i_ll]+0.0620*arr[i_l]+0.0738*arr[i]+0.0620*arr[i_r]+0.0369*arr[i_rr]
-		     + 0.0310*arr[i_bll]+0.0522*arr[i_bl]+0.0620*arr[i_b]+0.0522*arr[i_br]+0.0310*arr[i_brr]
-		     + 0.0184*arr[i_bbll]+0.0310*arr[i_bbl]+0.0369*arr[i_bb]+0.0310*arr[i_bbr]+0.0184*arr[i_bbrr];
-	} else {
-		return arr[i];
+void calculate_gaussian_kernel1D(){
+	for (int x = 0; x < W; ++x){
+		kernel1D[x] = exp(-0.5 * pow((x-mean)/sigma,2.0) ) / sqrt(2 * M_PI * sigma * sigma);
+		sum1D += kernel1D[x];
+	}
+	for (int x = 0; x < W; ++x){
+		kernel1D[x] /= sum1D;
 	}
 }
 
-float gaussian_blur_voxel(int i, float *arr){
+float gaussian_blur_voxel_1D(int i, float *arr, int dir){
+
+	float value = 0.0f;
 
 	int *loc_i = get_location(i);
+	for (int x = 0; x < W; ++x){
+		int index = i + (x-floor(W/2))*dir;
+		int *loc_x = get_location(index);
 
-	int i_uuu   = i-192-192-192;
-	int i_uuul = i_uuu-1;
-	int i_uuull = i_uuu-2;
-	int i_uuulll = i_uuu-3;
-	int i_uuur = i_uuu+1;
-	int i_uuurr = i_uuu+2;
-	int i_uuurrr = i_uuu+3;
-
-	int i_uu   = i-192-192;
-	int i_uul = i_uu-1;
-	int i_uull = i_uu-2;
-	int i_uulll = i_uu-3;
-	int i_uur = i_uu+1;
-	int i_uurr = i_uu+2;
-	int i_uurrr = i_uu+3;
-
-	int i_u   = i-192;
-	int i_ul = i_u-1;
-	int i_ull = i_u-2;
-	int i_ulll = i_u-3;
-	int i_ur = i_u+1;
-	int i_urr = i_u+2;
-	int i_urrr = i_u+3;
-
-	int i_l = i-1;
-	int i_ll = i-2;
-	int i_lll = i-3;
-	int i_r = i+1;
-	int i_rr = i+2;
-	int i_rrr = i+3;
-
-	int i_b   = i+192;
-	int i_bl = i_b-1;
-	int i_bll = i_b-2;
-	int i_blll = i_b-3;
-	int i_br = i_b+1;
-	int i_brr = i_b+2;
-	int i_brrr = i_b+3;
-
-	int i_bb   = i+192+192;
-	int i_bbl = i_bb-1;
-	int i_bbll = i_bb-2;
-	int i_bblll = i_bb-3;
-	int i_bbr = i_bb+1;
-	int i_bbrr = i_bb+2;
-	int i_bbrrr = i_bb+3;
-
-	int i_bbb   = i+192+192+192;
-	int i_bbbl = i_bbb-1;
-	int i_bbbll = i_bbb-2;
-	int i_bbblll = i_bbb-3;
-	int i_bbbr = i_bbb+1;
-	int i_bbbrr = i_bbb+2;
-	int i_bbbrrr = i_bbb+3;
-
-	int *loc_i_uull = get_location(i_uull);
-	int *loc_i_bbrr = get_location(i_bbrr);
-	if(loc_i[0] == loc_i_uull[0] && loc_i[0] == loc_i_bbrr[0] // same slice
-		&& loc_i[1] == (loc_i_uull[1]+2) && loc_i[1] == (loc_i_bbrr[1]-2) // 1 row diff
-		&& loc_i[2] == (loc_i_uull[2]+2) && loc_i[2] == (loc_i_bbrr[2]-2) // 1 col diff
-		&& loc_i[1] > 0 && loc_i[2] > 0) // top left corners
-	{
-		return 0.0026*arr[i_uuulll]+0.0062*arr[i_uuull]+0.0105*arr[i_uuul]+0.0125*arr[i_uuu]+0.0105*arr[i_uuur]+0.0062*arr[i_uuurr]+0.0026*arr[i_uuurrr]
-		     + 0.0062*arr[i_uulll]+0.0149*arr[i_uull]+0.0250*arr[i_uul]+0.0297*arr[i_uu]+0.0250*arr[i_uur]+0.0149*arr[i_uurr]+0.0062*arr[i_uurrr]
-		     + 0.0105*arr[i_ulll]+0.0250*arr[i_ull]+0.0420*arr[i_ul]+0.0500*arr[i_u]+0.0420*arr[i_ur]+0.0250*arr[i_urr]+0.0105*arr[i_urrr]
-		     + 0.0125*arr[i_lll]+0.0297*arr[i_ll]+0.0500*arr[i_l]+0.0594*arr[i]+0.0500*arr[i_r]+0.0297*arr[i_rr]+0.0125*arr[i_rrr]
-		     + 0.0105*arr[i_blll]+0.0250*arr[i_bll]+0.0420*arr[i_bl]+0.0500*arr[i_b]+0.0420*arr[i_br]+0.0250*arr[i_brr]+0.0105*arr[i_brrr]
- 		     + 0.0062*arr[i_bblll]+0.0149*arr[i_bbll]+0.0250*arr[i_bbl]+0.0297*arr[i_bb]+0.0250*arr[i_bbr]+0.0149*arr[i_bbrr]+0.0062*arr[i_bbrrr]
-		     + 0.0026*arr[i_bbblll]+0.0062*arr[i_bbbll]+0.0105*arr[i_bbbl]+0.0125*arr[i_bbb]+0.0105*arr[i_bbbr]+0.0062*arr[i_bbbrr]+0.0026*arr[i_bbbrrr];
-	} else {
-		return arr[i];
+		if( (dir <= WIDTH && loc_i[0] == loc_x[0]) || (loc_i[0] > 3 && loc_i[0] < DEPTH-3)
+			&& loc_i[1]>3 && loc_i[1] < HEIGHT-3 
+			&& loc_i[2]>3 && loc_i[2] < WIDTH-3 ){
+				value += kernel1D[x] * arr[ index ];
+		}
 	}
+	
+	if(value == 0.0f)
+		value = arr[i];
+
+	return value;
 }
 
 void load_raw_files(){
@@ -618,7 +532,6 @@ void load_raw_files(){
 
 void scale_utes(){
 	int *scales = find_scale_constants();
-	//cout <<  scales[0] << " " << scales[1] << endl;
 
 	for(size_t i=0; i<WIDTH*HEIGHT*DEPTH; i++){
 		ute1_s[i] = ute1[i]/scales[0]*1000;
@@ -839,10 +752,19 @@ void calculate_umap(){
 
 	}
 
-	/* Blur the output with a 3mm gaussian */
+	/* Blur the output with a 3mm gaussian (3 1D passes) */
+	calculate_gaussian_kernel1D();
 	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
-		umap_new_blurred[i] = gaussian_blur_voxel(i,umap_new);
+		umap_new_blur_x[i] = gaussian_blur_voxel_1D(i,umap_new,1);
 	}
+	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
+		umap_new_blur_xy[i] = gaussian_blur_voxel_1D(i,umap_new_blur_x,192);
+	}
+	for(size_t i = 0; i < WIDTH*HEIGHT*DEPTH; i++){
+		umap_new_blurred[i] = gaussian_blur_voxel_1D(i,umap_new_blur_xy,192*192);
+	}
+
+
 }
 
 void prepare_mnc_and_nifty_files(const char *argv[]){
@@ -985,6 +907,8 @@ int main(int argc, const char *argv[]) {
 	delete[] R2map_LAC;
 	delete[] R2bone_in_uteair;
 	delete[] umap_new;
+	delete[] umap_new_blur_x;
+	delete[] umap_new_blur_xy;
 	delete[] umap_new_blurred;
 	delete[] cluster;
 
