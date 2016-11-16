@@ -217,8 +217,17 @@ int mni_register_brain_from_atlas(const char* dcmfolder){
   			string svalue(value);
   			string::size_type sz;
   			int age = stoi (svalue,&sz);
-  			if (age <= 4){
-  				cout << " - CHOSE ATLAS: 33-44w = 3y (should use more precise estimation of age!)" << endl;
+  			if (age <= 2){
+  				cout << " - CHOSE ATLAS: 17-21w = 1.5-2y (should use more precise estimation of age!)" << endl;
+  				atlasMNC="/usr/local/share/RESOLUTE/nihpd_asym_17-21_t1w.mnc";
+  				atlasNII="/usr/local/share/RESOLUTE/nihpd_asym_17-21_t1w.nii";
+				atlasmaskNII="/usr/local/share/RESOLUTE/nihpd_asym_17-21_mask.nii";
+				sinusAndNose="/usr/local/share/RESOLUTE/nihpd_asym_17-21_sinus_and_nose2.nii";
+				basesinus="/usr/local/share/RESOLUTE/nihpd_asym_17-21_basesinus.nii";
+				baseNII="/usr/local/share/RESOLUTE/nihpd_asym_17-21_base11.nii";
+				sphenoid = "/usr/local/share/RESOLUTE/nihpd_asym_17-21_nasal_septa_and_eithmoidal_sinuses.nii";
+  			} else if (age <= 4){
+  				cout << " - CHOSE ATLAS: 33-44w = 3y" << endl;
   				atlasMNC="/usr/local/share/RESOLUTE/nihpd_asym_33-44_t1w.mnc";
   				atlasNII="/usr/local/share/RESOLUTE/nihpd_asym_33-44_t1w.nii";
 				atlasmaskNII="/usr/local/share/RESOLUTE/nihpd_asym_33-44_mask.nii";
