@@ -217,6 +217,11 @@ int mni_register_brain_from_atlas(const char* dcmfolder){
   			string svalue(value);
   			string::size_type sz;
   			int age = stoi (svalue,&sz);
+  			if(svalue.compare(svalue.size()-1,1,"M") == 0){
+  				age = round(age/12);
+  			}
+  			
+  			return 0;
   			if (age <= 2){
   				cout << " - CHOSE ATLAS: 17-21w = 1.5-2y (should use more precise estimation of age!)" << endl;
   				atlasMNC="/usr/local/share/RESOLUTE/nihpd_asym_17-21_t1w.mnc";
