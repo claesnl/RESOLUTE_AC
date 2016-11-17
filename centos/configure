@@ -30,14 +30,6 @@ else
 	(cd DCMTK && ./configure && make all && sudo make install-all) || exit 1
 fi
 
-echo "Installing perl :: ctime library"
-if [ -f "/usr/share/perl5/ctime.pl" ]; then
-	echo " - ctime already installed"
-else
-	wget http://perl5.git.perl.org/APC/perl-5.10.x/lib/ctime.pl
-	sudo mv ctime.pl /usr/share/perl5/
-fi
-
 echo "Installing minc tools"
 if hash dcm2mnc 2>/dev/null; then
 	echo " - minc tools already installed"
