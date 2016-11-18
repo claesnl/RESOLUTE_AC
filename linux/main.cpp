@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <string>
 #include <algorithm>
+#include <thread>
 
 #include "dcmtk/dcmdata/dctk.h"
 #include "dcmtk/dcmimgle/dcmimage.h"
@@ -780,8 +781,8 @@ void calculate_umap(){
 
 }
 
-void prepare_mnc_and_nifty_files(const char *argv[]){
-	cout << "Building .mnc files" << endl;
+void prepare_mnc_and_nifty_files_init(const char *argv[]){
+	cout << "Building .mnc and .nii files for UTE2 first" << endl;
 
 	system("mkdir /tmp/resolute_tmp");
 	system("touch /tmp/resolute_tmp/log_trash.txt");
@@ -790,12 +791,16 @@ void prepare_mnc_and_nifty_files(const char *argv[]){
 	system_call(vector_ute2,"/tmp/resolute_tmp/log_trash.txt");
 	cout << " - ute2 done" << endl;
 
+	cout << "Building .nii files" << endl;
+	system("mnc2nii /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/ute2.nii");
+}
+
+void prepare_mnc_and_nifty_files_next(const char *argv[]){
+	cout << "Building .mnc and .raw files for the rest" << endl;
+
 	vector<string> vector_ute1 {dcm2mnc,argv[1],"-dname","","-fname","ute1","/tmp/resolute_tmp/","-clobber"};
 	system_call(vector_ute1,"/tmp/resolute_tmp/log_trash.txt");
 	cout << " - ute1 done" << endl;
-
-	cout << "Building .nii files" << endl;
-	system("mnc2nii /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/ute2.nii");
 
 	cout << "Building .raw files" << endl;
 	system("minctoraw -nonormalize -float -unsigned /tmp/resolute_tmp/ute1.mnc > /tmp/resolute_tmp/ute1.raw");
@@ -866,6 +871,27 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
 	cout << "Finished with patient. Saved data to: " << out_folder << endl;
 }
 
+void threadANTS()
+{
+	/* Align to ICBM atlas */
+	mni_register_brain_from_atlas(argv[1]);
+}
+
+void threadREST()
+{
+	/* Create the remainding raw and mnc files */
+	prepare_mnc_and_nifty_files_next(argv);
+
+	/* Load raw files */
+	load_raw_files();
+
+	/* Scale UTEs */
+	scale_utes();
+
+	/* Find air inside patient */
+	locate_inner_air();
+}
+
 int main(int argc, const char *argv[]) {
 
 	if(argc < 5){
@@ -880,19 +906,21 @@ int main(int argc, const char *argv[]) {
 	cout << "\tOutput DCM dir: " << argv[4] << endl; 
 	
 	/* Create .mnc, .nii and .dcm files */
-	prepare_mnc_and_nifty_files(argv);
+	prepare_mnc_and_nifty_files_init(argv);
 
-	/* Align to ICBM atlas */
-	mni_register_brain_from_atlas(argv[1]);
+	/* Start two threads, ANTS and REST to run simultaeneously */
+	thread funcANTs(threadANTS);
+	thread funcREST(threadREST);
 
-	/* Load raw files */
-	load_raw_files();
-
-	/* Scale UTEs */
-	scale_utes();
-
-	/* Find air inside patient */
-	locate_inner_air();
+	/* Wait for the threads to finish before combining the masks */
+	if (funcANTs.joinable())
+	{
+		funcANTs.join();
+	}
+	if (funcREST.joinable())
+	{
+		funcREST.join();
+	}
 
 	/* Calculate tissue maps and combine into umap */
 	calculate_umap();
