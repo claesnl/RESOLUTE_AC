@@ -466,14 +466,7 @@ float gaussian_blur_voxel_1D(int i, float *arr, int dir){
 	return value;
 }
 
-void load_raw_files(){
-	ifstream in( "/tmp/resolute_tmp/ute1.raw", ios::in | ios::binary );
-	in.read( reinterpret_cast< char* >( ute1 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
-	in.close();
-	ifstream in2( "/tmp/resolute_tmp/ute2.raw", ios::in | ios::binary );
-	in2.read( reinterpret_cast< char* >( ute2 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
-	in2.close();
-
+void warp_template_files(){
 	// Warp the sinus and nose area
 	warp_image(sinusAndNose.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/sinus.nii");
 	vector<string> vector_sinusAndNose {nii2mnc,"/tmp/resolute_tmp/sinus.nii","/tmp/resolute_tmp/sinus2.mnc"};
@@ -484,8 +477,8 @@ void load_raw_files(){
 	in_sinus.read( reinterpret_cast< char* >( sinusmask ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_sinus.close();
 
-	// Extract brain and CSF values
-	cout << "Extracting brain and CSF values (about 30 seconds)" << endl;
+	// Extract brain values
+	cout << "Extracting brain values" << endl;
 	warp_image(atlasmaskNII.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/atlasbrain.nii");
 	vector<string> vector_atlasbrain {nii2mnc,"/tmp/resolute_tmp/atlasbrain.nii","/tmp/resolute_tmp/atlasbrain.mnc"};
 	system_call(vector_atlasbrain,"/tmp/resolute_tmp/log_trash.txt");
@@ -495,20 +488,6 @@ void load_raw_files(){
 	ifstream in_brain( "/tmp/resolute_tmp/brain.raw", ios::in | ios::binary );
 	in_brain.read( reinterpret_cast< char* >( brain ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_brain.close();
-	// CSF 
-	if(!file_exists("/tmp/resolute_tmp/ute2_nuc.mnc")){
-		vector<string> vector_insect {"/usr/local/share/RESOLUTE/insect_modified","/tmp/resolute_tmp/ute2.mnc",atlasMNC};
-		system_call(vector_insect,"/tmp/resolute_tmp/log_insect.txt");
-		system("mv ute2_* /tmp/resolute_tmp/");
-	}
-	system("mincresample /tmp/resolute_tmp/ute2_nuc_tal_cla.mnc -like /tmp/resolute_tmp/ute2.mnc -transformation /tmp/resolute_tmp/ute2_nuc_total.xfm -invert_transformation /tmp/resolute_tmp/ute2_cla.mnc -quiet -clobber");
-	system("mincresample -quiet /tmp/resolute_tmp/ute2_nuc_tal_cla.mnc -invert_transformation -transformation /tmp/resolute_tmp/ute2_nuc_total.xfm /tmp/resolute_tmp/ute2_nuc_tal_cla_rsl.mnc -like /tmp/resolute_tmp/ute2.mnc -clobber");
-	system("mincmath -quiet -eq -const 1 /tmp/resolute_tmp/ute2_nuc_tal_cla_rsl.mnc /tmp/resolute_tmp/csf.mnc -clobber");
-	system("minctoraw -nonormalize -float /tmp/resolute_tmp/csf.mnc > /tmp/resolute_tmp/csf.raw");
-	ifstream in_csf( "/tmp/resolute_tmp/csf.raw", ios::in | ios::binary );
-	in_csf.read( reinterpret_cast< char* >( csf ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
-	in_csf.close();
-	cout << " - Done" << endl;
 
 	// Extract base of skull mask
 	cout << "Running extract masks" << endl;
@@ -522,6 +501,7 @@ void load_raw_files(){
 	in_base.read( reinterpret_cast< char* >( base ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_base.close();
 
+	// Extract mastoid processes
 	warp_image(basesinus.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/basesinus.nii");
 	vector<string> vector_basesinus {nii2mnc,"/tmp/resolute_tmp/basesinus.nii","/tmp/resolute_tmp/warped_basesinus.mnc"};
 	system_call(vector_basesinus,"/tmp/resolute_tmp/log_trash.txt");
@@ -532,6 +512,7 @@ void load_raw_files(){
 	in_r2noise.read( reinterpret_cast< char* >( r2noise ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_r2noise.close();
 
+	// Extract sphenoid sinuses
 	warp_image(sphenoid.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/sphenoid.nii");
 	vector<string> vector_sphenoid {nii2mnc,"/tmp/resolute_tmp/sphenoid.nii","/tmp/resolute_tmp/sphenoid.mnc"};
 	system_call(vector_sphenoid,"/tmp/resolute_tmp/log_trash.txt");
@@ -542,6 +523,32 @@ void load_raw_files(){
 	in_sphenoid.read( reinterpret_cast< char* >( sphenoidmask ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_sphenoid.close();
 	cout << " - Done" << endl;
+
+}
+
+void load_raw_files(){
+	ifstream in( "/tmp/resolute_tmp/ute1.raw", ios::in | ios::binary );
+	in.read( reinterpret_cast< char* >( ute1 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
+	in.close();
+	ifstream in2( "/tmp/resolute_tmp/ute2.raw", ios::in | ios::binary );
+	in2.read( reinterpret_cast< char* >( ute2 ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
+	in2.close();
+
+	// CSF 
+	if(!file_exists("/tmp/resolute_tmp/ute2_nuc.mnc")){
+		cout << "Extracting CSF values with INSECT (about 30 seconds)" << endl;
+		vector<string> vector_insect {"/usr/local/share/RESOLUTE/insect_modified","/tmp/resolute_tmp/ute2.mnc",atlasMNC};
+		system_call(vector_insect,"/tmp/resolute_tmp/log_insect.txt");
+		system("mv ute2_* /tmp/resolute_tmp/");
+	}
+	system("mincresample /tmp/resolute_tmp/ute2_nuc_tal_cla.mnc -like /tmp/resolute_tmp/ute2.mnc -transformation /tmp/resolute_tmp/ute2_nuc_total.xfm -invert_transformation /tmp/resolute_tmp/ute2_cla.mnc -quiet -clobber");
+	system("mincresample -quiet /tmp/resolute_tmp/ute2_nuc_tal_cla.mnc -invert_transformation -transformation /tmp/resolute_tmp/ute2_nuc_total.xfm /tmp/resolute_tmp/ute2_nuc_tal_cla_rsl.mnc -like /tmp/resolute_tmp/ute2.mnc -clobber");
+	system("mincmath -quiet -eq -const 1 /tmp/resolute_tmp/ute2_nuc_tal_cla_rsl.mnc /tmp/resolute_tmp/csf.mnc -clobber");
+	system("minctoraw -nonormalize -float /tmp/resolute_tmp/csf.mnc > /tmp/resolute_tmp/csf.raw");
+	ifstream in_csf( "/tmp/resolute_tmp/csf.raw", ios::in | ios::binary );
+	in_csf.read( reinterpret_cast< char* >( csf ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
+	in_csf.close();
+	cout << " - Done with INSECT" << endl;
 }
 
 void scale_utes(){
@@ -882,7 +889,7 @@ void threadREST(const char *argv[])
 	/* Create the remainding raw and mnc files */
 	prepare_mnc_and_nifty_files_next(argv);
 
-	/* Load raw files */
+	/* Load raw files and run INSECT */
 	load_raw_files();
 
 	/* Scale UTEs */
@@ -922,6 +929,9 @@ int main(int argc, const char *argv[]) {
 		funcREST.join();
 	}
 
+	/* Warp the template masks */
+	warp_template_files();
+	
 	/* Calculate tissue maps and combine into umap */
 	calculate_umap();
 
