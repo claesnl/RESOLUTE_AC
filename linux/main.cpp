@@ -794,7 +794,7 @@ void prepare_mnc_and_nifty_files_init(const char *argv[]){
 	system("mkdir /tmp/resolute_tmp");
 	system("touch /tmp/resolute_tmp/log_trash.txt");
 
-	vector<string> vector_ute2 {dcm2mnc,argv[2],"-dname","","-fname","ute2","/tmp/resolute_tmp/","-clobber"};
+	vector<string> vector_ute2 {dcm2mnc,argv[2],"-usecoordinates","-dname","","-fname","ute2","/tmp/resolute_tmp/","-clobber"};
 	system_call(vector_ute2,"/tmp/resolute_tmp/log_trash.txt");
 	cout << " - ute2 done" << endl;
 
@@ -805,7 +805,7 @@ void prepare_mnc_and_nifty_files_init(const char *argv[]){
 void prepare_mnc_and_nifty_files_next(const char *argv[]){
 	cout << "Building .mnc and .raw files for the rest" << endl;
 
-	vector<string> vector_ute1 {dcm2mnc,argv[1],"-dname","","-fname","ute1","/tmp/resolute_tmp/","-clobber"};
+	vector<string> vector_ute1 {dcm2mnc,argv[1],"-usecoordinates","-dname","","-fname","ute1","/tmp/resolute_tmp/","-clobber"};
 	system_call(vector_ute1,"/tmp/resolute_tmp/log_trash.txt");
 	cout << " - ute1 done" << endl;
 
@@ -931,7 +931,7 @@ int main(int argc, const char *argv[]) {
 
 	/* Warp the template masks */
 	warp_template_files();
-	
+
 	/* Calculate tissue maps and combine into umap */
 	calculate_umap();
 
