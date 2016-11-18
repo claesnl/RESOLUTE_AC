@@ -871,13 +871,13 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
 	cout << "Finished with patient. Saved data to: " << out_folder << endl;
 }
 
-void threadANTS()
+void threadANTS(const char *argv[])
 {
 	/* Align to ICBM atlas */
 	mni_register_brain_from_atlas(argv[1]);
 }
 
-void threadREST()
+void threadREST(const char *argv[])
 {
 	/* Create the remainding raw and mnc files */
 	prepare_mnc_and_nifty_files_next(argv);
@@ -909,8 +909,8 @@ int main(int argc, const char *argv[]) {
 	prepare_mnc_and_nifty_files_init(argv);
 
 	/* Start two threads, ANTS and REST to run simultaeneously */
-	thread funcANTs(threadANTS);
-	thread funcREST(threadREST);
+	thread funcANTs(threadANTS,argv);
+	thread funcREST(threadREST,argv);
 
 	/* Wait for the threads to finish before combining the masks */
 	if (funcANTs.joinable())

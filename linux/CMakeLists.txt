@@ -21,6 +21,8 @@ add_definitions(-DSOURCE_CODE_LOCATION="${CMAKE_SOURCE_DIR}")
 # our source file
 set(SOURCE_FILES main.cpp)
 
+find_package (Threads)
+
 # search for DCMTK library and header files 
 find_package(DCMTK REQUIRED)
 
@@ -31,7 +33,7 @@ include_directories(${DCMTK_INCLUDE_DIRS})
 add_executable(RESOLUTE ${SOURCE_FILES})
 
 # link DCMTK library files 
-target_link_libraries(RESOLUTE ${DCMTK_LIBRARIES})
+target_link_libraries(RESOLUTE ${DCMTK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS RESOLUTE DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES bin/insect_modified PERMISSIONS WORLD_EXECUTE WORLD_WRITE WORLD_READ DESTINATION /usr/local/share/RESOLUTE)
