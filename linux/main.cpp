@@ -8,7 +8,7 @@
 * Changes	::
 *	v2.0.1	::	26-July-2016 		:: Added automatic build scripts. Working build now for Ubuntu and CentOS.
 *	v2.0.2	::	15-November-2016 	:: Added 3mm Gaussian 3D blurring of final result.
-*
+*	v2.0.3 	::	22-February-2017	:: Corrected an error, missing multiplication of low R2 value.
 */
 
 #include <iostream>
@@ -48,6 +48,8 @@ float *sinusmask = new float[ WIDTH*HEIGHT*DEPTH ];
 float *brain = new float[ WIDTH*HEIGHT*DEPTH ];
 float *csf = new float[ WIDTH*HEIGHT*DEPTH ];
 float *base = new float[ WIDTH*HEIGHT*DEPTH ];
+float *base_remove = new float[ WIDTH*HEIGHT*DEPTH ];
+float *mouth = new float[ WIDTH*HEIGHT*DEPTH ];
 float *r2noise = new float[ WIDTH*HEIGHT*DEPTH ];
 float *sphenoidmask = new float[ WIDTH*HEIGHT*DEPTH ];
 
@@ -466,6 +468,15 @@ float gaussian_blur_voxel_1D(int i, float *arr, int dir){
 	return value;
 }
 
+size_t find_first_voxel_with_base_mask(){
+	for(size_t i=0; i<WIDTH*HEIGHT*DEPTH; ++i){
+		if(base[i] > 0.5){
+			return i;
+		}
+	}
+}
+
+
 void warp_template_files(){
 	// Warp the sinus and nose area
 	warp_image(sinusAndNose.c_str(), "/tmp/resolute_tmp/ute2.nii", "/tmp/resolute_tmp/sinus.nii");
@@ -522,6 +533,21 @@ void warp_template_files(){
 	ifstream in_sphenoid( "/tmp/resolute_tmp/sphenoid.raw", ios::in | ios::binary );
 	in_sphenoid.read( reinterpret_cast< char* >( sphenoidmask ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
 	in_sphenoid.close();
+
+	// Extract mouth mask from sinuses
+	system("param2xfm -translation 0.0 0.0 -30.0 /tmp/resolute_tmp/trans.xfm");
+	system("mincresample /tmp/resolute_tmp/sphenoid.mnc -transformation /tmp/resolute_tmp/trans.xfm -like /tmp/resolute_tmp/ute2.mnc /tmp/resolute_tmp/mouth.mnc -clobber");
+	system("dilate_volume /tmp/resolute_tmp/mouth.mnc /tmp/resolute_tmp/mouth_dila.mnc 1 26 1");
+	system("minctoraw -nonormalize -float /tmp/resolute_tmp/mouth_dila.mnc > /tmp/resolute_tmp/mouth.raw");
+	ifstream in_mouth( "/tmp/resolute_tmp/mouth.raw", ios::in | ios::binary );
+	in_mouth.read( reinterpret_cast< char* >( mouth ), sizeof(float)*WIDTH*HEIGHT*DEPTH );
+	in_mouth.close();	
+
+	// Find H/N region below the skull base mask. We clamp the bone values in this region.
+	size_t first_pixel = find_first_voxel_with_base_mask();
+	for(size_t i=0; i<WIDTH*HEIGHT*DEPTH; ++i)
+		base_remove[i] = (i < first_pixel) ? 1.0 : 0.0;
+
 	cout << " - Done" << endl;
 
 }
@@ -726,9 +752,9 @@ void calculate_umap(){
 		float vox_LAC = (vox_R2s_max > 100 && vox_LAC_tmp > 1010) ? vox_LAC_tmp : 0.0;
 		R2map_LAC[i] = vox_LAC;
 
-		float vox_low_HU = 0.000001351*pow(R2map[i],3.0) - 0.003617*pow(R2map[i],2.0) + 3.841*R2map[i] - 19.46;
+		float vox_low_HU = 0.000001351*pow(R2map[i]*1000,3.0) - 0.003617*pow(R2map[i]*1000,2.0) + 3.841*R2map[i]*1000 - 19.46;
 		float vox_low_LAC_tmp = (0.000051*(vox_low_HU+1000)+0.0471)*10000;
-		float vox_low_LAC = (R2map[i] > 300 && vox_low_LAC_tmp > 1010) ? vox_low_LAC_tmp : 0.0;
+		float vox_low_LAC = (R2map[i]*1000 > 300 && vox_low_LAC_tmp > 1010) ? vox_low_LAC_tmp : 0.0;
 		R2map_low_LAC[i] = vox_low_LAC;
 
 		/* Extract ute signal in air */
@@ -753,6 +779,10 @@ void calculate_umap(){
          			umap_new[i] = R2map_low_LAC[i];
          		else if(base[i] > 0.5 || ute2_s[i] > 1200)
          			umap_new[i] = 925;
+         		else if(mouth[i] > 0.5 && R2map_low_LAC[i] > 1300)
+         			umap_new[i] = 1300;
+         		else if(base_remove[i] > 0.5 || mouth[i] > 0.5)
+         			umap_new[i] = (R2map_low_LAC[i] > 1100) ? 1100 : 990;
          		else
          		    umap_new[i] = R2map_LAC[i];
         	} else {
@@ -946,6 +976,7 @@ int main(int argc, const char *argv[]) {
 	delete[] brain;
 	delete[] csf;
 	delete[] base;
+	delete[] base_remove;
 	delete[] r2noise;
 	delete[] sphenoidmask;
 	delete[] ute1_s;
