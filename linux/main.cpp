@@ -977,6 +977,7 @@ int main(int argc, const char *argv[]) {
 	delete[] csf;
 	delete[] base;
 	delete[] base_remove;
+	delete[] mouth;
 	delete[] r2noise;
 	delete[] sphenoidmask;
 	delete[] ute1_s;
