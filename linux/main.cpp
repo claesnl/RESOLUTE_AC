@@ -9,7 +9,7 @@
 *	v2.0.1	::	26-July-2016 		:: Added automatic build scripts. Working build now for Ubuntu and CentOS.
 *	v2.0.2	::	15-November-2016 	:: Added 3mm Gaussian 3D blurring of final result.
 *	v2.0.3 	::	22-February-2017	:: Corrected an error, missing multiplication of low R2 value.
-*	v2.0.4	::	09-March-2017		:: Added default age of >18 if no birthdate is set (e.g. due to annomization).
+*	v2.0.4	::	09-March-2017		:: Added default age of >18 if no birthdate is set (e.g. due to anonymization).
 */
 
 #include <iostream>
