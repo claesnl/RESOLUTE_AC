@@ -9,6 +9,7 @@
 *	v2.0.1	::	26-July-2016 		:: Added automatic build scripts. Working build now for Ubuntu and CentOS.
 *	v2.0.2	::	15-November-2016 	:: Added 3mm Gaussian 3D blurring of final result.
 *	v2.0.3 	::	22-February-2017	:: Corrected an error, missing multiplication of low R2 value.
+*	v2.0.4	::	09-March-2017		:: Added default age of >18 if no birthdate is set (e.g. due to annomization).
 */
 
 #include <iostream>
@@ -260,16 +261,16 @@ int mni_register_brain_from_atlas(const char* dcmfolder){
 				basesinus="/usr/local/share/RESOLUTE/nihpd_asym_07.0-11.0_basesinus.nii";
 				baseNII="/usr/local/share/RESOLUTE/nihpd_asym_07.0-11.0_base11.nii";
 				sphenoid = "/usr/local/share/RESOLUTE/nihpd_asym_07.0-11.0_nasal_septa_and_eithmoidal_sinuses.nii";
-  			} else if(age <= 18){
-  				cout << " - CHOSE ATLAS: 13-18.5y" << endl;
-  				atlasMNC="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_t1w.mnc";
-  				atlasNII="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_t1w.nii";
+			} else if(age <= 18){
+				cout << " - CHOSE ATLAS: 13-18.5y" << endl;
+				atlasMNC="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_t1w.mnc";
+				atlasNII="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_t1w.nii";
 				atlasmaskNII="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_mask.nii";
 				sinusAndNose="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_sinus_and_nose2.nii";
 				basesinus="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_basesinus.nii";
 				baseNII="/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_base11.nii";
 				sphenoid = "/usr/local/share/RESOLUTE/nihpd_asym_13.0-18.5_nasal_septa_and_eithmoidal_sinuses.nii";
-  			} else if (age > 18){
+			} else if (age > 18){
 				cout << " - CHOSE ATLAS: >18y" << endl;
 				atlasMNC="/usr/local/share/RESOLUTE/mni_icbm152_t1_tal_nlin_sym_09a.mnc";
 				atlasNII="/usr/local/share/RESOLUTE/mni_icbm152_t1_tal_nlin_sym_09a.nii";
@@ -279,8 +280,17 @@ int mni_register_brain_from_atlas(const char* dcmfolder){
 				baseNII="/usr/local/share/RESOLUTE/base11.nii";
 				sphenoid = "/usr/local/share/RESOLUTE/nasal_septa_and_eithmoidal_sinuses.nii";
 			} else 
-    			cout << "under 18!" << endl;
-    	}
+				cout << "under 18!" << endl;
+		} else {
+			cout << " - CHOSE DEFAULT ATLAS AGE: >18y" << endl;
+			atlasMNC="/usr/local/share/RESOLUTE/mni_icbm152_t1_tal_nlin_sym_09a.mnc";
+			atlasNII="/usr/local/share/RESOLUTE/mni_icbm152_t1_tal_nlin_sym_09a.nii";
+			atlasmaskNII="/usr/local/share/RESOLUTE/mni_icbm152_t1_tal_nlin_sym_09a_mask.nii";
+			sinusAndNose="/usr/local/share/RESOLUTE/sinus_and_nose2.nii";
+			basesinus="/usr/local/share/RESOLUTE/basesinus.nii";
+			baseNII="/usr/local/share/RESOLUTE/base11.nii";
+			sphenoid = "/usr/local/share/RESOLUTE/nasal_septa_and_eithmoidal_sinuses.nii";
+		}
 	} else {
 		cout << "Failed to load DCM file.. stopping" << endl;
 		return 1;
