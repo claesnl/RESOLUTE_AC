@@ -10,6 +10,7 @@
 *	v2.0.2	::	15-November-2016 	:: Added 3mm Gaussian 3D blurring of final result.
 *	v2.0.3 	::	22-February-2017	:: Corrected an error, missing multiplication of low R2 value.
 *	v2.0.4	::	09-March-2017		:: Added default age of >18 if no birthdate is set (e.g. due to anonymization).
+*	v2.0.5 	::	10-November-2017	:: Fixed folder requirements to end with slash, and allow dicom files without .dcm/.ima endings.
 */
 
 #include <iostream>
@@ -28,6 +29,7 @@
 #include <string>
 #include <algorithm>
 #include <thread>
+#include <stdio.h>
 
 #include "dcmtk/dcmdata/dctk.h"
 #include "dcmtk/dcmimgle/dcmimage.h"
@@ -194,6 +196,14 @@ inline bool file_exists (const std::string& name) {
   return (stat (name.c_str(), &buffer) == 0); 
 }
 
+bool hasEnding (string const &fullString, string const &ending) {
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
+}
+
 int mni_register_brain_from_atlas(const char* dcmfolder){
 
 	DIR *dir;
@@ -207,9 +217,13 @@ int mni_register_brain_from_atlas(const char* dcmfolder){
 		}
 		closedir(dir);
 	}
-	string dcmfile_full = string(dcmfolder) + string(dcmfile);
-
+	string slash = "";
+	if(!hasEnding(dcmfolder,"/"))
+		slash = "/";
+	string dcmfile_full = string(dcmfolder) + string(slash) + string(dcmfile);
+	
 	cout << "Starting ANTS registration from MNI to patient space (about 2 minutes).." << endl;
+	cout << "Reading age from " << dcmfile_full << endl;
 
 	/* Get AGE of patient */
 	int age;
@@ -855,8 +869,17 @@ void prepare_mnc_and_nifty_files_next(const char *argv[]){
 }
 
 void save_to_dcm(const char* uteumapfolder, const char *out_folder){
-	string executable_mkdir = "mkdir "+string(out_folder);
-	system(executable_mkdir.c_str());
+	//string executable_mkdir = "mkdir "+string(out_folder);
+	//system(executable_mkdir.c_str());
+	int status = 0;
+	struct stat sb;
+	if (stat(out_folder, &sb) != 0 && !S_ISDIR(sb.st_mode))
+		status = mkdir(out_folder,0777);
+	if(status == 0){
+		cout << "Saving to folder now.." << endl;
+	} else {
+		cout << "Failed to create save folder.. already exists?" << status << endl;
+	}
 
 	DIR *dir;
 	struct dirent *ent;
@@ -864,14 +887,19 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
 	if((dir = opendir(uteumapfolder)) != NULL){
 		while((ent = readdir(dir)) != NULL){
 			dcmfile = ent->d_name;
-			if(strlen(dcmfile) >= 4 && ( strcmp(dcmfile+strlen(dcmfile)-4,".dcm") == 0
+			// Now allowing all endings
+			/*if(strlen(dcmfile) >= 4 && ( strcmp(dcmfile+strlen(dcmfile)-4,".dcm") == 0
 									  || strcmp(dcmfile+strlen(dcmfile)-4,".DCM") == 0
 									  || strcmp(dcmfile+strlen(dcmfile)-4,".IMA") == 0
 									  || strcmp(dcmfile+strlen(dcmfile)-4,".ima") == 0))
 			{
-
-				string dcmfile_full = string(uteumapfolder) + string(dcmfile);
-				string filetype = string(dcmfile+strlen(dcmfile)-3);
+			*/
+				//string dcmfile_full = string(uteumapfolder) + string(dcmfile);
+				string slash = "";
+				if(!hasEnding(uteumapfolder,"/"))
+					slash = "/";
+				string dcmfile_full = string(uteumapfolder) + string(slash) + string(dcmfile);
+				//string filetype = string(dcmfile+strlen(dcmfile)-3);
 				int instance_number;
 				DcmFileFormat fileformat;
   				if (fileformat.loadFile(dcmfile_full.c_str()).good()){
@@ -879,41 +907,57 @@ void save_to_dcm(const char* uteumapfolder, const char *out_folder){
   					DcmDataset *dataset = fileformat.getDataset();
   					if (dataset->findAndGetSint32(DCM_InstanceNumber, value).good()){
 
-  						char executable[200];
-						snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.dcm",dcmfile_full.c_str(),out_folder,static_cast<int>(value));
-						system(executable);
+  						//char executable[200];
+						//snprintf(executable, sizeof(executable), "cp %s %s/IM-0001-%04d.dcm",dcmfile_full.c_str(),out_folder,static_cast<int>(value));
+						//status = system(executable);
+						//cout << "cmd: " << executable << " => " << status << endl;	
+						char tofile[200];
+						snprintf(tofile, sizeof(tofile), "%s/IM-0001-%04d.dcm",out_folder,static_cast<int>(value));
+						
+						std::ifstream  src(dcmfile_full.c_str(), std::ios::binary);
+						std::ofstream  dst(tofile,   std::ios::binary);
+						dst << src.rdbuf();
+						cout << "Moving " << dcmfile_full.c_str() << " to " << tofile << endl;
 
+					} else {
+						cout << "Could not get InstanceNumber from DCM file " << dcmfile_full << endl;
 					}
+				} else {
+					cout << "Ignoring non-DCM file " << dcmfile_full << endl;
 				}
-			}
+			/*} else {
+				cout << "Ignoring " << dcmfile << endl;
+			}*/
 		}
 		closedir(dir);
+	} else {
+		cout << "Could not open UTE umap folder.." << endl;
 	}
 
-    for(size_t d = 0; d < DEPTH; d++){
+	for(size_t d = 0; d < DEPTH; d++){
 
-    	Uint16 *slice = new Uint16[WIDTH*HEIGHT];
-    	for(size_t j = 0; j < HEIGHT; j++){
-        	for(size_t i = 0; i < WIDTH; i++){
+	    	Uint16 *slice = new Uint16[WIDTH*HEIGHT];
+	    	for(size_t j = 0; j < HEIGHT; j++){
+			for(size_t i = 0; i < WIDTH; i++){
 				slice[i + j*HEIGHT] = umap_new_blurred[i + j*HEIGHT + d*WIDTH*HEIGHT];
-	      	}
-	    }
-	    DcmFileFormat fileformat;
+		      	}
+		}
+		DcmFileFormat fileformat;
 		char buff2[100];
 		snprintf(buff2, sizeof(buff2), "%s/IM-0001-%04d.dcm",out_folder,static_cast<int>(d+1));
 		const char* name2 = buff2;	      			
 		if (fileformat.loadFile(name2).good()){
-	        DcmDataset *dataset = fileformat.getDataset();
-	        dataset->putAndInsertUint16Array(DCM_PixelData, slice, 192*192);
-	        dataset->putAndInsertString(DCM_SeriesDescription, "RESOLUTE");
-	        dataset->putAndInsertUint16(DCM_SeriesNumber, 100);
+		DcmDataset *dataset = fileformat.getDataset();
+		dataset->putAndInsertUint16Array(DCM_PixelData, slice, 192*192);
+		dataset->putAndInsertString(DCM_SeriesDescription, "RESOLUTE");
+		dataset->putAndInsertUint16(DCM_SeriesNumber, 100);
 
-	        OFCondition status = fileformat.saveFile(name2, EXS_LittleEndianExplicit);
-	        if(status.bad())
-	        	cerr << "Error: " << status.text() << endl;
+		OFCondition status = fileformat.saveFile(name2, EXS_LittleEndianExplicit);
+		if(status.bad())
+			cerr << "Error: " << status.text() << endl;
 		}
 		delete[] slice;
-	}
+    	}
 
 	cout << "Finished with patient. Saved data to: " << out_folder << endl;
 }
@@ -939,6 +983,18 @@ void threadREST(const char *argv[])
 	locate_inner_air();
 }
 
+void remove_tmp_folder()
+{
+	struct stat sb;
+	
+	if (stat("/tmp/resolute_tmp", &sb) == 0 && S_ISDIR(sb.st_mode))
+	{
+		cout << "Removing tmp folder" << endl;
+		system("exec rm -rf /tmp/resolute_tmp");
+	} else 
+		cout << "Folder does not exist" << endl;
+}
+
 int main(int argc, const char *argv[]) {
 
 	if(argc < 5){
@@ -951,6 +1007,8 @@ int main(int argc, const char *argv[]) {
 	cout << "\tUTE TE2 folder: " << argv[2] << endl;
 	cout << "\tUTE Umap folder: " << argv[3] << endl;
 	cout << "\tOutput DCM dir: " << argv[4] << endl; 
+
+	remove_tmp_folder();
 	
 	/* Create .mnc, .nii and .dcm files */
 	prepare_mnc_and_nifty_files_init(argv);
@@ -978,7 +1036,7 @@ int main(int argc, const char *argv[]) {
 	/* Save data to DCM */
 	save_to_dcm(argv[3], argv[4]);
 
-	system("rm -rf /tmp/resolute_tmp");
+	remove_tmp_folder();
 	
 	delete[] ute1;
 	delete[] ute2;
